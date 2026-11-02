@@ -61,55 +61,30 @@
         <!-- MAIN SCROLLABLE CONTENT (WORK TAB ONLY) -->
         <main class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
 
-            <!-- US TAX ESTIMATE BREAKDOWN BANNER -->
+            <!-- TOP TAX CONTROL & LIVE SUMMARY CARD -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                <div class="flex justify-between items-center text-xs">
-                    <span class="font-bold text-white flex items-center gap-1.5">
-                        <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i> Estimated US Tax Breakdown
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="percent" class="w-4 h-4 text-indigo-400"></i> Tax Rate & Summary
                     </span>
-                    <span id="tax-filing-status-label" class="text-indigo-400 font-semibold">Single • W-2</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
-                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Gross Logged Earnings</span>
-                        <span id="summary-gross" class="text-sm font-extrabold text-white">$0.00</span>
-                    </div>
-                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
-                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Estimated Net Pay</span>
-                        <span id="summary-net" class="text-sm font-extrabold text-emerald-400">$0.00</span>
+                    <div class="flex items-center gap-2">
+                        <label for="tax-rate-input" class="text-[10px] uppercase font-bold text-slate-400">Tax Rate (%):</label>
+                        <input type="number" step="0.5" min="0" max="100" id="tax-rate-input" value="15.0" oninput="updateUI()" class="w-20 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 text-xs font-bold text-indigo-400 text-center focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
-                <!-- Tax Withholding Breakdown Items -->
-                <div class="space-y-1.5 pt-1 border-t border-slate-800/60 text-xs">
-                    <div class="flex justify-between text-slate-400">
-                        <span class="flex items-center gap-1">
-                            <i data-lucide="landmark" class="w-3.5 h-3.5 text-indigo-400"></i> Social Security (6.2%)
-                        </span>
-                        <span id="tax-ss-val" class="text-rose-400 font-medium">-$0.00</span>
+                <div class="grid grid-cols-3 gap-2 text-xs pt-1">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                        <span class="text-[9px] text-slate-400 block uppercase font-medium">Gross Total</span>
+                        <span id="summary-gross" class="text-xs sm:text-sm font-extrabold text-white">$0.00</span>
                     </div>
-                    <div class="flex justify-between text-slate-400">
-                        <span class="flex items-center gap-1">
-                            <i data-lucide="activity" class="w-3.5 h-3.5 text-indigo-400"></i> Medicare (1.45%)
-                        </span>
-                        <span id="tax-medicare-val" class="text-rose-400 font-medium">-$0.00</span>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                        <span class="text-[9px] text-slate-400 block uppercase font-medium">Est. Tax</span>
+                        <span id="summary-tax" class="text-xs sm:text-sm font-extrabold text-rose-400">-$0.00</span>
                     </div>
-                    <div class="flex justify-between text-slate-400">
-                        <span class="flex items-center gap-1">
-                            <i data-lucide="building" class="w-3.5 h-3.5 text-indigo-400"></i> Est. Federal Income Tax
-                        </span>
-                        <span id="tax-fed-val" class="text-rose-400 font-medium">-$0.00</span>
-                    </div>
-                    <div class="flex justify-between text-slate-400">
-                        <span class="flex items-center gap-1">
-                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> Est. State/Local Tax
-                        </span>
-                        <span id="tax-state-val" class="text-rose-400 font-medium">-$0.00</span>
-                    </div>
-                    <div class="flex justify-between text-slate-300 font-bold pt-1 border-t border-slate-800">
-                        <span>Total Estimated Withholding</span>
-                        <span id="tax-total-deductions" class="text-rose-400">-$0.00</span>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                        <span class="text-[9px] text-slate-400 block uppercase font-medium">Net Take-Home</span>
+                        <span id="summary-net" class="text-xs sm:text-sm font-extrabold text-emerald-400">$0.00</span>
                     </div>
                 </div>
             </div>
@@ -137,11 +112,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Rate ($/hr)</label>
-                            <input type="number" step="0.25" id="shift-rate" required placeholder="18.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                            <input type="number" step="0.25" id="shift-rate" required placeholder="18.00" value="18" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
                             <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Job / Employer</label>
-                            <input type="text" id="shift-job" placeholder="e.g. Main Job, Freelance" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="shift-job" placeholder="e.g. Main Job, Freelance" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
                         </div>
                     </div>
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">
@@ -166,144 +141,25 @@
         </main>
     </div>
 
-    <!-- US TAX & PAYROLL SETTINGS MODAL -->
-    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <div>
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">US Tax & Wage Settings</h3>
-                    <p class="text-[10px] text-slate-400">Configure employment type & withholding rules</p>
-                </div>
-                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-
-            <form id="settings-form" class="space-y-3 text-xs">
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Default Hourly Wage ($/hr)</label>
-                    <input type="number" step="0.25" id="set-default-rate" value="18.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Employment Classification</label>
-                    <select id="set-emp-type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                        <option value="w2">W-2 Employee (Standard FICA 7.65% Split)</option>
-                        <option value="1099">1099 Contractor / Self-Employed (Full SE Tax 15.3%)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Filing Status</label>
-                    <select id="set-filing-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                        <option value="single">Single</option>
-                        <option value="married">Married Filing Jointly</option>
-                        <option value="head">Head of Household</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Est. Fed Tax Rate (%)</label>
-                        <input type="number" step="0.1" id="set-fed-tax" value="12.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Est. State Tax Rate (%)</label>
-                        <input type="number" step="0.1" id="set-state-tax" value="4.5" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 text-[11px] text-slate-400">
-                    <div class="flex justify-between">
-                        <span>FICA Payroll Tax (Social Security + Medicare):</span>
-                        <span id="set-fica-rate-display" class="font-bold text-slate-200">7.65%</span>
-                    </div>
-                    <p class="text-[10px] text-slate-500">Rates are automatically computed to show accurate US take-home pay estimates.</p>
-                </div>
-
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">
-                    Save Tax & Wage Settings
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- APP LOGIC -->
     <script>
         const STORAGE_KEY_SHIFTS = 'us_work_tracker_shifts';
-        const STORAGE_KEY_SETTINGS = 'us_work_tracker_settings';
+        const STORAGE_KEY_TAX_RATE = 'us_work_tracker_tax_rate';
 
         let shiftEntries = [];
-        let userSettings = {
-            defaultRate: 18.00,
-            empType: 'w2',
-            filingStatus: 'single',
-            fedTaxRate: 12.0,
-            stateTaxRate: 4.5
-        };
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            loadSettings();
-            loadShifts();
             
+            const savedTax = localStorage.getItem(STORAGE_KEY_TAX_RATE);
+            if (savedTax !== null) {
+                document.getElementById('tax-rate-input').value = savedTax;
+            }
+
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('shift-date').value = todayStr;
-            document.getElementById('shift-rate').value = userSettings.defaultRate;
-        });
-
-        function loadSettings() {
-            const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
-            if (saved) {
-                try {
-                    userSettings = { ...userSettings, ...JSON.parse(saved) };
-                } catch (e) {
-                    console.error('Failed to parse settings');
-                }
-            }
-            applySettingsToUI();
-        }
-
-        function saveSettings() {
-            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(userSettings));
-            applySettingsToUI();
-            updateUI();
-        }
-
-        function applySettingsToUI() {
-            document.getElementById('set-default-rate').value = userSettings.defaultRate;
-            document.getElementById('set-emp-type').value = userSettings.empType;
-            document.getElementById('set-filing-status').value = userSettings.filingStatus;
-            document.getElementById('set-fed-tax').value = userSettings.fedTaxRate;
-            document.getElementById('set-state-tax').value = userSettings.stateTaxRate;
-
-            const ficaDisplay = userSettings.empType === '1099' ? '15.3% (Self-Employment Tax)' : '7.65% (FICA Standard)';
-            document.getElementById('set-fica-rate-display').innerText = ficaDisplay;
-
-            const statusCapitalized = userSettings.filingStatus.charAt(0).toUpperCase() + userSettings.filingStatus.slice(1);
-            const empLabel = userSettings.empType.toUpperCase();
-            document.getElementById('tax-filing-status-label').innerText = `${statusCapitalized} • ${empLabel}`;
-        }
-
-        function toggleSettingsModal() {
-            const modal = document.getElementById('settings-modal');
-            modal.classList.toggle('hidden');
-        }
-
-        document.getElementById('settings-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            userSettings.defaultRate = parseFloat(document.getElementById('set-default-rate').value) || 18.00;
-            userSettings.empType = document.getElementById('set-emp-type').value;
-            userSettings.filingStatus = document.getElementById('set-filing-status').value;
-            userSettings.fedTaxRate = parseFloat(document.getElementById('set-fed-tax').value) || 0;
-            userSettings.stateTaxRate = parseFloat(document.getElementById('set-state-tax').value) || 0;
-
-            document.getElementById('shift-rate').value = userSettings.defaultRate;
-            saveSettings();
-            toggleSettingsModal();
-        });
-
-        document.getElementById('set-emp-type').addEventListener('change', (e) => {
-            const ficaDisplay = e.target.value === '1099' ? '15.3% (Self-Employment Tax)' : '7.65% (FICA Standard)';
-            document.getElementById('set-fica-rate-display').innerText = ficaDisplay;
+            
+            loadShifts();
         });
 
         function loadShifts() {
@@ -328,7 +184,7 @@
             e.preventDefault();
             const date = document.getElementById('shift-date').value;
             const hours = parseFloat(document.getElementById('shift-hours').value);
-            const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || userSettings.defaultRate;
+            const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || 18.00;
             const job = document.getElementById('shift-job').value.trim() || 'General Work';
 
             const newShift = {
@@ -361,34 +217,17 @@
         }
 
         function updateUI() {
+            const taxRate = parseFloat(document.getElementById('tax-rate-input').value) || 0;
+            localStorage.setItem(STORAGE_KEY_TAX_RATE, taxRate);
+
             const totalGross = shiftEntries.reduce((sum, s) => sum + (Number(s.hours) * Number(s.hourly_rate)), 0);
+            const totalTax = totalGross * (taxRate / 100);
+            const totalNet = Math.max(0, totalGross - totalTax);
 
-            // Calculate US Tax Deductions
-            let ssRate = 0.062;
-            let medicareRate = 0.0145;
-
-            // If 1099 (Self-Employed), double FICA contribution (Employer + Employee shares)
-            if (userSettings.empType === '1099') {
-                ssRate = 0.124;
-                medicareRate = 0.029;
-            }
-
-            const ssTax = totalGross * ssRate;
-            const medicareTax = totalGross * medicareRate;
-            const fedTax = totalGross * (userSettings.fedTaxRate / 100);
-            const stateTax = totalGross * (userSettings.stateTaxRate / 100);
-
-            const totalDeductions = ssTax + medicareTax + fedTax + stateTax;
-            const netPay = Math.max(0, totalGross - totalDeductions);
-
-            // Update Summary Card
+            // Update Summary Banner
             document.getElementById('summary-gross').innerText = `$${totalGross.toFixed(2)}`;
-            document.getElementById('summary-net').innerText = `$${netPay.toFixed(2)}`;
-            document.getElementById('tax-ss-val').innerText = `-$${ssTax.toFixed(2)}`;
-            document.getElementById('tax-medicare-val').innerText = `-$${medicareTax.toFixed(2)}`;
-            document.getElementById('tax-fed-val').innerText = `-$${fedTax.toFixed(2)}`;
-            document.getElementById('tax-state-val').innerText = `-$${stateTax.toFixed(2)}`;
-            document.getElementById('tax-total-deductions').innerText = `-$${totalDeductions.toFixed(2)}`;
+            document.getElementById('summary-tax').innerText = `-$${totalTax.toFixed(2)}`;
+            document.getElementById('summary-net').innerText = `$${totalNet.toFixed(2)}`;
 
             document.getElementById('pending-earnings-total').innerText = `$${totalGross.toFixed(2)} Gross`;
 
@@ -399,10 +238,8 @@
             } else {
                 shiftsListEl.innerHTML = shiftEntries.map(s => {
                     const gross = (Number(s.hours) * Number(s.hourly_rate));
-                    const shiftFicaRate = userSettings.empType === '1099' ? 0.153 : 0.0765;
-                    const shiftTotalTaxRate = shiftFicaRate + (userSettings.fedTaxRate / 100) + (userSettings.stateTaxRate / 100);
-                    const shiftNet = gross * (1 - shiftTotalTaxRate);
-
+                    const shiftTax = gross * (taxRate / 100);
+                    const shiftNet = gross - shiftTax;
                     const isPaid = s.status === 'paid';
 
                     return `
@@ -417,7 +254,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <button onclick="toggleShiftPaidStatus('${s.id}')" class="${isPaid ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'} border font-bold px-2 py-1 rounded-lg transition text-[10px]">
-                                    ${isPaid ? 'Paid' : 'Unpaid'}
+                                    ${isPaid ? 'Credited' : 'Pending'}
                                 </button>
                                 <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>

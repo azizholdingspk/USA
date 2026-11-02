@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>USA Work & Tax Tracker</title>
+    
+    <!-- PWA Manifest & App Config -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#0b1329', 900: '#0f172a', 950: '#020617' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: env(safe-area-inset-top);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body id="app-body" class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
+
+    <!-- MAIN CONTAINER -->
+    <div id="app-wrapper" class="flex-1 flex flex-col max-w-md w-full mx-auto relative overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="px-4 py-3 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
+            <div class="min-w-0 pr-2">
+                <h1 class="text-sm font-bold tracking-tight text-white truncate flex items-center gap-1.5">
+                    <span>🇺🇸</span> US Work & Net Pay Tracker
+                </h1>
+                <p class="text-[10px] text-slate-400 font-medium truncate">
+                    Track shifts, withholding, & estimated take-home pay
+                </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="toggleSettingsModal()" title="Tax & Wage Settings" class="w-8 h-8 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN SCROLLABLE CONTENT (WORK TAB ONLY) -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
+
+            <!-- US TAX ESTIMATE BREAKDOWN BANNER -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-white flex items-center gap-1.5">
+                        <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i> Estimated US Tax Breakdown
+                    </span>
+                    <span id="tax-filing-status-label" class="text-indigo-400 font-semibold">Single • W-2</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Gross Logged Earnings</span>
+                        <span id="summary-gross" class="text-sm font-extrabold text-white">$0.00</span>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Estimated Net Pay</span>
+                        <span id="summary-net" class="text-sm font-extrabold text-emerald-400">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Tax Withholding Breakdown Items -->
+                <div class="space-y-1.5 pt-1 border-t border-slate-800/60 text-xs">
+                    <div class="flex justify-between text-slate-400">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="landmark" class="w-3.5 h-3.5 text-indigo-400"></i> Social Security (6.2%)
+                        </span>
+                        <span id="tax-ss-val" class="text-rose-400 font-medium">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="activity" class="w-3.5 h-3.5 text-indigo-400"></i> Medicare (1.45%)
+                        </span>
+                        <span id="tax-medicare-val" class="text-rose-400 font-medium">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="building" class="w-3.5 h-3.5 text-indigo-400"></i> Est. Federal Income Tax
+                        </span>
+                        <span id="tax-fed-val" class="text-rose-400 font-medium">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> Est. State/Local Tax
+                        </span>
+                        <span id="tax-state-val" class="text-rose-400 font-medium">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300 font-bold pt-1 border-t border-slate-800">
+                        <span>Total Estimated Withholding</span>
+                        <span id="tax-total-deductions" class="text-rose-400">-$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WORK SHIFT ENTRY FORM CARD -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i> Log Work Shift / Hours
+                    </h2>
+                </div>
+
+                <!-- Shift Entry Form -->
+                <form id="shift-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hours Worked</label>
+                            <input type="number" step="0.25" id="shift-hours" required placeholder="8.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
+                            <input type="date" id="shift-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Rate ($/hr)</label>
+                            <input type="number" step="0.25" id="shift-rate" required placeholder="18.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Job / Employer</label>
+                            <input type="text" id="shift-job" placeholder="e.g. Main Job, Freelance" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">
+                        Save Work Shift Entry
+                    </button>
+                </form>
+            </div>
+
+            <!-- WORK SHIFTS HISTORY & PAYOUTS -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center text-xs px-1">
+                    <span class="font-bold text-slate-300 uppercase tracking-wider">Work Shifts History & Payouts</span>
+                    <span id="pending-earnings-total" class="text-emerald-400 font-semibold">$0.00 Gross</span>
+                </div>
+                <div id="shifts-list" class="space-y-2">
+                    <div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">
+                        No work shifts logged yet.
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- US TAX & PAYROLL SETTINGS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">US Tax & Wage Settings</h3>
+                    <p class="text-[10px] text-slate-400">Configure employment type & withholding rules</p>
+                </div>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="settings-form" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Default Hourly Wage ($/hr)</label>
+                    <input type="number" step="0.25" id="set-default-rate" value="18.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Employment Classification</label>
+                    <select id="set-emp-type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <option value="w2">W-2 Employee (Standard FICA 7.65% Split)</option>
+                        <option value="1099">1099 Contractor / Self-Employed (Full SE Tax 15.3%)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Filing Status</label>
+                    <select id="set-filing-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <option value="single">Single</option>
+                        <option value="married">Married Filing Jointly</option>
+                        <option value="head">Head of Household</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Est. Fed Tax Rate (%)</label>
+                        <input type="number" step="0.1" id="set-fed-tax" value="12.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Est. State Tax Rate (%)</label>
+                        <input type="number" step="0.1" id="set-state-tax" value="4.5" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 text-[11px] text-slate-400">
+                    <div class="flex justify-between">
+                        <span>FICA Payroll Tax (Social Security + Medicare):</span>
+                        <span id="set-fica-rate-display" class="font-bold text-slate-200">7.65%</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500">Rates are automatically computed to show accurate US take-home pay estimates.</p>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">
+                    Save Tax & Wage Settings
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- APP LOGIC -->
+    <script>
+        const STORAGE_KEY_SHIFTS = 'us_work_tracker_shifts';
+        const STORAGE_KEY_SETTINGS = 'us_work_tracker_settings';
+
+        let shiftEntries = [];
+        let userSettings = {
+            defaultRate: 18.00,
+            empType: 'w2',
+            filingStatus: 'single',
+            fedTaxRate: 12.0,
+            stateTaxRate: 4.5
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadSettings();
+            loadShifts();
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('shift-date').value = todayStr;
+            document.getElementById('shift-rate').value = userSettings.defaultRate;
+        });
+
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
+            if (saved) {
+                try {
+                    userSettings = { ...userSettings, ...JSON.parse(saved) };
+                } catch (e) {
+                    console.error('Failed to parse settings');
+                }
+            }
+            applySettingsToUI();
+        }
+
+        function saveSettings() {
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(userSettings));
+            applySettingsToUI();
+            updateUI();
+        }
+
+        function applySettingsToUI() {
+            document.getElementById('set-default-rate').value = userSettings.defaultRate;
+            document.getElementById('set-emp-type').value = userSettings.empType;
+            document.getElementById('set-filing-status').value = userSettings.filingStatus;
+            document.getElementById('set-fed-tax').value = userSettings.fedTaxRate;
+            document.getElementById('set-state-tax').value = userSettings.stateTaxRate;
+
+            const ficaDisplay = userSettings.empType === '1099' ? '15.3% (Self-Employment Tax)' : '7.65% (FICA Standard)';
+            document.getElementById('set-fica-rate-display').innerText = ficaDisplay;
+
+            const statusCapitalized = userSettings.filingStatus.charAt(0).toUpperCase() + userSettings.filingStatus.slice(1);
+            const empLabel = userSettings.empType.toUpperCase();
+            document.getElementById('tax-filing-status-label').innerText = `${statusCapitalized} • ${empLabel}`;
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            userSettings.defaultRate = parseFloat(document.getElementById('set-default-rate').value) || 18.00;
+            userSettings.empType = document.getElementById('set-emp-type').value;
+            userSettings.filingStatus = document.getElementById('set-filing-status').value;
+            userSettings.fedTaxRate = parseFloat(document.getElementById('set-fed-tax').value) || 0;
+            userSettings.stateTaxRate = parseFloat(document.getElementById('set-state-tax').value) || 0;
+
+            document.getElementById('shift-rate').value = userSettings.defaultRate;
+            saveSettings();
+            toggleSettingsModal();
+        });
+
+        document.getElementById('set-emp-type').addEventListener('change', (e) => {
+            const ficaDisplay = e.target.value === '1099' ? '15.3% (Self-Employment Tax)' : '7.65% (FICA Standard)';
+            document.getElementById('set-fica-rate-display').innerText = ficaDisplay;
+        });
+
+        function loadShifts() {
+            const saved = localStorage.getItem(STORAGE_KEY_SHIFTS);
+            if (saved) {
+                try {
+                    shiftEntries = JSON.parse(saved);
+                } catch (e) {
+                    shiftEntries = [];
+                }
+            }
+            updateUI();
+        }
+
+        function saveShifts() {
+            localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shiftEntries));
+            updateUI();
+        }
+
+        // WORK SHIFT ENTRY SUBMISSION
+        document.getElementById('shift-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('shift-date').value;
+            const hours = parseFloat(document.getElementById('shift-hours').value);
+            const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || userSettings.defaultRate;
+            const job = document.getElementById('shift-job').value.trim() || 'General Work';
+
+            const newShift = {
+                id: Date.now().toString(),
+                date,
+                hours,
+                hourly_rate,
+                job,
+                status: 'logged'
+            };
+
+            shiftEntries.unshift(newShift);
+            saveShifts();
+
+            document.getElementById('shift-hours').value = '';
+            document.getElementById('shift-job').value = '';
+        });
+
+        function deleteShift(id) {
+            shiftEntries = shiftEntries.filter(s => s.id !== id);
+            saveShifts();
+        }
+
+        function toggleShiftPaidStatus(id) {
+            const shift = shiftEntries.find(s => s.id === id);
+            if (shift) {
+                shift.status = shift.status === 'paid' ? 'logged' : 'paid';
+                saveShifts();
+            }
+        }
+
+        function updateUI() {
+            const totalGross = shiftEntries.reduce((sum, s) => sum + (Number(s.hours) * Number(s.hourly_rate)), 0);
+
+            // Calculate US Tax Deductions
+            let ssRate = 0.062;
+            let medicareRate = 0.0145;
+
+            // If 1099 (Self-Employed), double FICA contribution (Employer + Employee shares)
+            if (userSettings.empType === '1099') {
+                ssRate = 0.124;
+                medicareRate = 0.029;
+            }
+
+            const ssTax = totalGross * ssRate;
+            const medicareTax = totalGross * medicareRate;
+            const fedTax = totalGross * (userSettings.fedTaxRate / 100);
+            const stateTax = totalGross * (userSettings.stateTaxRate / 100);
+
+            const totalDeductions = ssTax + medicareTax + fedTax + stateTax;
+            const netPay = Math.max(0, totalGross - totalDeductions);
+
+            // Update Summary Card
+            document.getElementById('summary-gross').innerText = `$${totalGross.toFixed(2)}`;
+            document.getElementById('summary-net').innerText = `$${netPay.toFixed(2)}`;
+            document.getElementById('tax-ss-val').innerText = `-$${ssTax.toFixed(2)}`;
+            document.getElementById('tax-medicare-val').innerText = `-$${medicareTax.toFixed(2)}`;
+            document.getElementById('tax-fed-val').innerText = `-$${fedTax.toFixed(2)}`;
+            document.getElementById('tax-state-val').innerText = `-$${stateTax.toFixed(2)}`;
+            document.getElementById('tax-total-deductions').innerText = `-$${totalDeductions.toFixed(2)}`;
+
+            document.getElementById('pending-earnings-total').innerText = `$${totalGross.toFixed(2)} Gross`;
+
+            // Render Shift List
+            const shiftsListEl = document.getElementById('shifts-list');
+            if (shiftEntries.length === 0) {
+                shiftsListEl.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No work shifts logged yet.</div>`;
+            } else {
+                shiftsListEl.innerHTML = shiftEntries.map(s => {
+                    const gross = (Number(s.hours) * Number(s.hourly_rate));
+                    const shiftFicaRate = userSettings.empType === '1099' ? 0.153 : 0.0765;
+                    const shiftTotalTaxRate = shiftFicaRate + (userSettings.fedTaxRate / 100) + (userSettings.stateTaxRate / 100);
+                    const shiftNet = gross * (1 - shiftTotalTaxRate);
+
+                    const isPaid = s.status === 'paid';
+
+                    return `
+                        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                            <div class="space-y-0.5">
+                                <div class="font-bold text-white">${s.date} • ${s.job}</div>
+                                <div class="text-[10px] text-slate-400">
+                                    ${s.hours} hrs @ $${Number(s.hourly_rate).toFixed(2)}/hr • 
+                                    Gross: <span class="text-white font-medium">$${gross.toFixed(2)}</span> | 
+                                    Est. Net: <span class="text-emerald-400 font-semibold">$${shiftNet.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="toggleShiftPaidStatus('${s.id}')" class="${isPaid ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'} border font-bold px-2 py-1 rounded-lg transition text-[10px]">
+                                    ${isPaid ? 'Paid' : 'Unpaid'}
+                                </button>
+                                <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

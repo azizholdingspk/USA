@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CampusFinance 🇺🇸 Student Budget & US Tax Tracker</title>
+    <title>CampusFinance 🇺🇸 Student Budget & Work Tracker</title>
     
     <!-- PWA Manifest & App Logo -->
     <link rel="manifest" href="manifest.json">
@@ -51,7 +51,7 @@
                     🇺🇸
                 </div>
                 <h1 class="text-xl font-bold text-white tracking-tight">CampusFinance US</h1>
-                <p class="text-xs text-slate-400">US Student Budget & Tax Tracker</p>
+                <p class="text-xs text-slate-400">US Student Earn & Spend Budgeting</p>
             </div>
 
             <div id="auth-error" class="hidden bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl"></div>
@@ -216,7 +216,7 @@
                         <span class="text-indigo-400 font-medium">Auto-Calculated</span>
                     </div>
                     <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
-                        <span>Monthly Allowance / Stipend</span>
+                        <span>Monthly Allowance / Earned Income</span>
                         <span id="math-pool" class="font-bold text-white">$1,500.00</span>
                     </div>
                     <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
@@ -280,62 +280,6 @@
                     </form>
                 </div>
 
-                <!-- Academic Semester Tracker -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4 text-indigo-400"></i> Semester Plan Progress</span>
-                        <span id="blocked-months-label" class="text-indigo-400 font-semibold">Month -- of --</span>
-                    </div>
-                    <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                        <div id="blocked-progress-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-slate-500">
-                        <span id="sperrkonto-start-lbl">Start: --</span>
-                        <span id="sperrkonto-end-lbl">End: --</span>
-                    </div>
-                </div>
-
-                <!-- Currency Converter Widget -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <i data-lucide="repeat" class="w-4 h-4 text-indigo-400"></i> Currency Converter
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                            <label class="block text-[10px] text-slate-400 uppercase mb-1">Amount (USD)</label>
-                            <input type="number" id="conv-eur" value="100" oninput="convertCurrency()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-400 uppercase mb-1">Target Currency</label>
-                            <select id="conv-target" onchange="convertCurrency()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
-                                <option value="AED">AED - UAE Dirham (🇦🇪)</option>
-                                <option value="EUR">EUR - Euro (€)</option>
-                                <option value="GBP">GBP - British Pound (£)</option>
-                                <option value="INR">INR - Indian Rupee (₹)</option>
-                                <option value="PKR">PKR - Pakistani Rupee (Rs)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                        <span class="text-slate-400">Converted Value:</span>
-                        <span id="conv-result" class="font-extrabold text-emerald-400 text-sm">367.25 AED</span>
-                    </div>
-                </div>
-
-                <!-- US Academic & Tax Deadlines Widget -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-indigo-600/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 shrink-0">
-                            <i data-lucide="calendar-clock" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <span class="text-xs font-bold text-white block">US Academic / Tax Deadline</span>
-                            <span id="deadline-countdown" class="text-[10px] text-slate-400">IRS Tax Day (April 15)</span>
-                        </div>
-                    </div>
-                    <span id="deadline-badge" class="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/20">- Days</span>
-                </div>
-
             </section>
 
             <!-- TAB 2: TRANSACTIONS HISTORY & FILTERING -->
@@ -367,7 +311,7 @@
 
             <!-- TAB 3: WORK & F-1 VISA COMPLIANCE -->
             <section id="tab-work" class="tab-content space-y-4 hidden">
-                <!-- F-1 VISA WORK COMPLIANCE COUNTER (20 Hours/Week Limit) -->
+                <!-- F-1 VISA WORK COMPLIANCE COUNTER -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="scale" class="w-4 h-4 text-indigo-400"></i> US F-1 On-Campus Work Limit</span>
@@ -387,11 +331,11 @@
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i> Log Campus Shift / Work
+                            <i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i> Log Campus Shift & Tax Deductions
                         </h3>
                     </div>
 
-                    <!-- Work Shift Entry Form -->
+                    <!-- Work Shift Entry Form with Tax % Option -->
                     <form id="shift-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -403,9 +347,15 @@
                                 <input type="date" id="shift-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
-                            <input type="number" step="0.50" id="shift-rate" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
+                                <input type="number" step="0.50" id="shift-rate" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Tax Deducted (%)</label>
+                                <input type="number" step="0.1" id="shift-tax-percent" value="10.0" placeholder="10.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                            </div>
                         </div>
                         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">Save Shift Draft</button>
                     </form>
@@ -592,25 +542,10 @@
                         </div>
                     </div>
 
-                    <!-- Semester Tracker Settings -->
                     <div class="space-y-2 border-b border-slate-800 pb-3">
-                        <span class="text-[10px] uppercase font-bold text-indigo-400">Semester Term Config</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Start Month</label>
-                                <input type="month" id="set-sperrkonto-start" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Duration (Months)</label>
-                                <input type="number" id="set-sperrkonto-months" value="12" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 border-b border-slate-800 pb-3">
-                        <span class="text-[10px] uppercase font-bold text-indigo-400">Monthly Budget & Living Costs</span>
+                        <span class="text-[10px] uppercase font-bold text-indigo-400">Monthly Allowance & Living Costs</span>
                         <div>
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Monthly Allowance / Budget ($)</label>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Monthly Allowance ($)</label>
                             <input type="number" step="0.01" id="set-pool" required placeholder="1500.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
                         </div>
                         
@@ -719,7 +654,6 @@
             lucide.createIcons();
             setupAuthListeners();
             setupPasswordListeners();
-            calcDeadlineCountdown();
             startDualClock();
             
             const todayStr = new Date().toISOString().split('T')[0];
@@ -755,7 +689,6 @@
             });
             
             fetchLocationAndExternalData();
-            convertCurrency();
         });
 
         // PASSWORD STRENGTH & VALIDATION LOGIC
@@ -906,17 +839,6 @@
             setInterval(updateClocks, 10000);
         }
 
-        // CURRENCY CONVERTER (BASE USD)
-        const exchangeRates = { AED: 3.6725, EUR: 0.92, GBP: 0.79, INR: 83.20, PKR: 278.50 };
-        function convertCurrency() {
-            const eur = parseFloat(document.getElementById('conv-eur').value) || 0;
-            const target = document.getElementById('conv-target').value;
-            const rate = exchangeRates[target] || 1;
-            const res = eur * rate;
-            const symbols = { AED: 'AED ', EUR: '€', GBP: '£', INR: '₹', PKR: 'Rs ' };
-            document.getElementById('conv-result').innerText = `${symbols[target]}${res.toFixed(2)} ${target}`;
-        }
-
         async function fetchLocationAndExternalData() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (position) => {
@@ -1003,16 +925,6 @@
         function openPrayerModal() { document.getElementById('prayer-modal').classList.remove('hidden'); }
         function closePrayerModal() { document.getElementById('prayer-modal').classList.add('hidden'); }
 
-        function calcDeadlineCountdown() {
-            const now = new Date();
-            let targetYear = now.getFullYear();
-            let taxDay = new Date(targetYear, 3, 15); // April 15
-            if (now > taxDay) taxDay = new Date(targetYear + 1, 3, 15);
-            const diffDays = Math.ceil((taxDay - now) / (1000 * 60 * 60 * 24));
-            document.getElementById('deadline-countdown').innerText = `IRS Tax Day (Form 8843 / 1040)`;
-            document.getElementById('deadline-badge').innerText = `${diffDays} days left`;
-        }
-
         function showAuth() {
             document.getElementById('auth-screen').classList.remove('hidden');
             document.getElementById('app-wrapper').classList.add('hidden');
@@ -1094,14 +1006,15 @@
             }
         }
 
-        // WORK SHIFT ENTRY SUBMISSION
+        // WORK SHIFT ENTRY SUBMISSION (WITH TAX DEDUCTION PERCENTAGE)
         document.getElementById('shift-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const date = document.getElementById('shift-date').value;
             const hours = parseFloat(document.getElementById('shift-hours').value);
             const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || Number(userSettings.hourly_rate) || 15.00;
+            const tax_percent = parseFloat(document.getElementById('shift-tax-percent').value) || 0;
 
-            const newShift = { user_id: currentUser.id, date, hours, hourly_rate, status: 'pending' };
+            const newShift = { user_id: currentUser.id, date, hours, hourly_rate, tax_percent, status: 'pending' };
 
             const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select();
             if (!error && data) {
@@ -1109,11 +1022,11 @@
                 document.getElementById('shift-hours').value = '';
                 updateUI();
             } else {
-                alert('Shift logging error: ' + (error ? error.message : 'Check table installation'));
+                alert('Shift logging error: ' + (error ? error.message : 'Check database setup'));
             }
         });
 
-        // CREDIT SHIFT PAYOUT TO BUDGET POOL
+        // CREDIT SHIFT NET PAYOUT TO BUDGET POOL AFTER TAX DEDUCTION
         async function creditShiftPayout(shiftId) {
             const shift = shiftEntries.find(s => s.id === shiftId);
             if (!shift) return;
@@ -1122,8 +1035,11 @@
             if (!error) {
                 shift.status = 'credited';
                 
-                const earningsAmt = Number(shift.hours) * Number(shift.hourly_rate);
-                userSettings.monthly_budget = Number(userSettings.monthly_budget) + earningsAmt;
+                const gross = Number(shift.hours) * Number(shift.hourly_rate);
+                const taxPct = Number(shift.tax_percent) || 0;
+                const netEarnings = gross * (1 - (taxPct / 100));
+
+                userSettings.monthly_budget = Number(userSettings.monthly_budget) + netEarnings;
                 await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
 
                 updateUI();
@@ -1231,35 +1147,11 @@
             select.innerHTML = options;
         }
 
-        function renderSperrkontoTracker() {
-            if (!userSettings) return;
-            const startMonthStr = userSettings.sperrkonto_start || '2026-09';
-            const totalMonths = Number(userSettings.sperrkonto_months) || 12;
-
-            const startDate = new Date(startMonthStr + "-01");
-            const now = new Date();
-            
-            const diffYears = now.getFullYear() - startDate.getFullYear();
-            const diffMonths = now.getMonth() - startDate.getMonth();
-            const currentMonthIndex = Math.min(totalMonths, Math.max(1, diffYears * 12 + diffMonths + 1));
-
-            const progressPct = Math.min(100, (currentMonthIndex / totalMonths) * 100);
-
-            document.getElementById('blocked-months-label').innerText = `Month ${currentMonthIndex} of ${totalMonths}`;
-            document.getElementById('blocked-progress-bar').style.width = `${progressPct}%`;
-            document.getElementById('sperrkonto-start-lbl').innerText = `Start: ${startMonthStr}`;
-            
-            const endDate = new Date(startDate);
-            endDate.setMonth(startDate.getMonth() + totalMonths - 1);
-            document.getElementById('sperrkonto-end-lbl').innerText = `End: ${endDate.toISOString().slice(0, 7)}`;
-        }
-
         // US F-1 WORK COMPLIANCE COUNTER (20 Hours per Week Limit)
         function renderVisaWorkCounter() {
             const now = new Date();
             const currentYear = now.getFullYear();
             
-            // Calculate total work hours for the current week
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay());
             startOfWeek.setHours(0,0,0,0);
@@ -1293,29 +1185,41 @@
             else progressBar.className = "bg-indigo-500 h-full rounded-full transition-all duration-500";
         }
 
-        // RENDER EXPECTED EARNINGS STAGING LIST
+        // RENDER EXPECTED EARNINGS STAGING LIST (WITH TAX CALCULATION)
         function renderShiftStaging() {
             const pendingList = document.getElementById('pending-shifts-list');
             const pendingShifts = shiftEntries.filter(s => s.status === 'pending');
-            const totalPendingDraft = pendingShifts.reduce((sum, s) => sum + (Number(s.hours) * Number(s.hourly_rate)), 0);
+            
+            // Net pending earnings after tax deduction %
+            const totalPendingNet = pendingShifts.reduce((sum, s) => {
+                const gross = Number(s.hours) * Number(s.hourly_rate);
+                const taxPct = Number(s.tax_percent) || 0;
+                return sum + (gross * (1 - taxPct / 100));
+            }, 0);
 
-            document.getElementById('pending-earnings-total').innerText = `+$${totalPendingDraft.toFixed(2)} Draft`;
-            document.getElementById('visa-pending-income').innerText = `Pending Earnings: $${totalPendingDraft.toFixed(2)}`;
+            document.getElementById('pending-earnings-total').innerText = `+$${totalPendingNet.toFixed(2)} Net Draft`;
+            document.getElementById('visa-pending-income').innerText = `Pending Net: $${totalPendingNet.toFixed(2)}`;
 
             if (shiftEntries.length === 0) {
-                pendingList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No work shifts logged yet.</div>`;
+                pendingList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>`;
             } else {
                 pendingList.innerHTML = shiftEntries.map(s => {
-                    const amt = (Number(s.hours) * Number(s.hourly_rate)).toFixed(2);
+                    const gross = Number(s.hours) * Number(s.hourly_rate);
+                    const taxPct = Number(s.tax_percent) || 0;
+                    const taxAmt = gross * (taxPct / 100);
+                    const net = gross - taxAmt;
                     const isCredited = s.status === 'credited';
+
                     return `
                         <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
                             <div class="space-y-0.5">
                                 <div class="font-bold text-white">${s.date} • ${s.hours} hrs @ $${s.hourly_rate}/hr</div>
-                                <div class="text-[10px] text-slate-400">Total: <span class="${isCredited ? 'text-emerald-400' : 'text-indigo-400'} font-semibold">$${amt}</span> • <span class="${isCredited ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'}">${isCredited ? 'Credited' : 'Pending Draft'}</span></div>
+                                <div class="text-[10px] text-slate-400">
+                                    Gross: $${gross.toFixed(2)} | Tax (${taxPct}%): -$${taxAmt.toFixed(2)} | <span class="${isCredited ? 'text-emerald-400' : 'text-indigo-400'} font-semibold">Net: $${net.toFixed(2)}</span>
+                                </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                ${!isCredited ? `<button onclick="creditShiftPayout('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-lg transition text-[10px]">Credit</button>` : ''}
+                                ${!isCredited ? `<button onclick="creditShiftPayout('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-lg transition text-[10px]">Credit</button>` : '<span class="text-emerald-400 font-medium text-[10px]">Credited</span>'}
                                 <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
@@ -1433,7 +1337,6 @@
 
             renderShiftStaging();
             renderVisaWorkCounter();
-            renderSperrkontoTracker();
             renderExpenseBarGraph(monthTxs, lastDayOfMonth);
             renderCategoryBreakdown(monthTxs);
             renderTransactionsLists();
@@ -1481,7 +1384,7 @@
                 `).join('');
             }
 
-            // Tax tab rendering with DELETE option
+            // Tax tab rendering
             const taxTxs = transactions.filter(t => t.is_tax_deductible);
             document.getElementById('tax-count').innerText = `${taxTxs.length} items`;
 
@@ -1531,8 +1434,6 @@
                 document.getElementById('set-health').value = userSettings.health_ins_cost || 110;
                 document.getElementById('set-gez').value = userSettings.gez_cost || 40.00;
                 document.getElementById('set-internet').value = userSettings.internet_cost || 50.00;
-                document.getElementById('set-sperrkonto-start').value = userSettings.sperrkonto_start || '2026-09';
-                document.getElementById('set-sperrkonto-months').value = userSettings.sperrkonto_months || 12;
             } else {
                 document.getElementById('set-wage').value = 15.00;
                 document.getElementById('set-flatmates').value = 1;
@@ -1541,8 +1442,6 @@
                 document.getElementById('set-health').value = 110;
                 document.getElementById('set-gez').value = 40.00;
                 document.getElementById('set-internet').value = 50.00;
-                document.getElementById('set-sperrkonto-start').value = '2026-09';
-                document.getElementById('set-sperrkonto-months').value = 12;
             }
             recalcFixedSum();
             document.getElementById('settings-modal').classList.remove('hidden');
@@ -1571,9 +1470,7 @@
             const rent_cost = parseFloat(document.getElementById('set-rent').value) || 0;
             const health_ins_cost = parseFloat(document.getElementById('set-health').value) || 0;
             const gez_cost = parseFloat(document.getElementById('set-gez').value) || 40.00;
-            const internet_cost = parseFloat(document.getElementById('set-internet').value) || 0;
-            const sperrkonto_start = document.getElementById('set-sperrkonto-start').value;
-            const sperrkonto_months = parseInt(document.getElementById('set-sperrkonto-months').value) || 12;
+            const internet_cost = parseFloat(document.getElementById('set-internet').value) || 50.00;
             
             const gezShare = gez_cost / flatmates;
             const fixed_costs = rent_cost + health_ins_cost + gezShare + internet_cost;
@@ -1589,9 +1486,7 @@
                 rent_cost, 
                 health_ins_cost, 
                 gez_cost, 
-                internet_cost, 
-                sperrkonto_start, 
-                sperrkonto_months 
+                internet_cost
             };
 
             let error = null;

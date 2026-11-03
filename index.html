@@ -76,7 +76,7 @@
     <!-- MAIN APP WRAPPER -->
     <div id="app-wrapper" class="flex-1 flex flex-col max-w-md w-full mx-auto relative overflow-hidden hidden">
         
-        <!-- HEADER WITH DUAL TIME ZONE DISPLAY -->
+        <!-- HEADER WITH DUAL TIME ZONE DISPLAY & LOGOUT -->
         <header class="px-4 py-3 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
             <div class="min-w-0 pr-2">
                 <h1 id="greeting-label" class="text-sm font-bold tracking-tight text-white truncate">
@@ -167,6 +167,30 @@
                     </div>
                 </div>
 
+                <!-- ADD FAMILY SUPPORT / MONEY RECEIVED CARD -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="arrow-down-circle" class="w-4 h-4 text-emerald-400"></i> Add Support / Money Received
+                    </h3>
+                    <form id="income-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
+                                <input type="number" step="0.01" id="inc-amount" required placeholder="200.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Title / Source</label>
+                                <input type="text" id="inc-title" required placeholder="e.g. Dad Support, Brother..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date Received</label>
+                            <input type="date" id="inc-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-emerald-600/20">Add to Monthly Budget</button>
+                    </form>
+                </div>
+
                 <!-- Fixed Monthly Expenses Card -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
                     <div class="flex justify-between items-center">
@@ -216,7 +240,7 @@
                         <span class="text-indigo-400 font-medium">Auto-Calculated</span>
                     </div>
                     <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
-                        <span>Monthly Allowance / Earned Income</span>
+                        <span>Monthly Allowance + Support</span>
                         <span id="math-pool" class="font-bold text-white">$1,500.00</span>
                     </div>
                     <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
@@ -654,11 +678,13 @@
             lucide.createIcons();
             setupAuthListeners();
             setupPasswordListeners();
+            setupIncomeListener();
             startDualClock();
             
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('exp-date').value = todayStr;
             document.getElementById('shift-date').value = todayStr;
+            document.getElementById('inc-date').value = todayStr;
             document.getElementById('filter-input-month').value = todayStr.substring(0, 7);
             document.getElementById('filter-input-day').value = todayStr;
             populateWeekDropdown();
@@ -677,7 +703,7 @@
                 showAuth();
             }
 
-            // Listen for auth state changes
+            // Listen for auth state changes (sign in, sign out, token refresh)
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session) {
                     currentUser = session.user;
@@ -1006,6 +1032,32 @@
             }
         }
 
+        // HANDLE FAMILY SUPPORT / MONEY RECEIVED SUBMISSION
+        function setupIncomeListener() {
+            document.getElementById('income-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('inc-amount').value);
+                const title = document.getElementById('inc-title').value;
+                const date = document.getElementById('inc-date').value;
+
+                if (!currentUser || !userSettings) return;
+
+                // Add to user active budget pool
+                userSettings.monthly_budget = Number(userSettings.monthly_budget) + amount;
+                
+                // Update settings table in Supabase
+                const { error } = await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
+
+                if (!error) {
+                    document.getElementById('income-form').reset();
+                    document.getElementById('inc-date').value = new Date().toISOString().split('T')[0];
+                    updateUI();
+                } else {
+                    alert('Error adding support money: ' + error.message);
+                }
+            });
+        }
+
         // WORK SHIFT ENTRY SUBMISSION (WITH TAX DEDUCTION PERCENTAGE)
         document.getElementById('shift-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1087,445 +1139,3 @@
         }
 
         function openEditModal(id) {
-            const tx = transactions.find(t => t.id === id);
-            if (!tx) return;
-            document.getElementById('edit-id').value = tx.id;
-            document.getElementById('edit-amount').value = tx.amount;
-            document.getElementById('edit-category').value = tx.category;
-            document.getElementById('edit-desc').value = tx.description;
-            document.getElementById('edit-date').value = tx.date;
-            document.getElementById('edit-tax').checked = tx.is_tax_deductible;
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
-        document.getElementById('edit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const updated = {
-                amount: parseFloat(document.getElementById('edit-amount').value),
-                category: document.getElementById('edit-category').value,
-                description: document.getElementById('edit-desc').value || document.getElementById('edit-category').value,
-                date: document.getElementById('edit-date').value,
-                is_tax_deductible: document.getElementById('edit-tax').checked
-            };
-
-            const { error } = await supabaseClient.from('transactions').update(updated).eq('id', id);
-            if (!error) {
-                const idx = transactions.findIndex(t => t.id === id);
-                if (idx !== -1) transactions[idx] = { ...transactions[idx], ...updated };
-                closeEditModal();
-                updateUI();
-            }
-        });
-
-        function toggleFilterMode() {
-            const mode = document.getElementById('filter-mode').value;
-            const label = document.getElementById('filter-value-label');
-            const mInput = document.getElementById('filter-input-month');
-            const dInput = document.getElementById('filter-input-day');
-            const wInput = document.getElementById('filter-input-week');
-
-            mInput.classList.add('hidden'); dInput.classList.add('hidden'); wInput.classList.add('hidden');
-
-            if (mode === 'month') { label.innerText = 'Select Month'; mInput.classList.remove('hidden'); }
-            else if (mode === 'day') { label.innerText = 'Select Day'; dInput.classList.remove('hidden'); }
-            else if (mode === 'week') { label.innerText = 'Select Week'; wInput.classList.remove('hidden'); populateWeekDropdown(); }
-            renderTransactionsLists();
-        }
-
-        function populateWeekDropdown() {
-            const select = document.getElementById('filter-input-week');
-            let options = '';
-            const now = new Date();
-            for (let i = 0; i < 4; i++) {
-                const start = new Date(now); start.setDate(now.getDate() - (i * 7) - now.getDay());
-                const end = new Date(start); end.setDate(start.getDate() + 6);
-                options += `<option value="${start.toISOString().split('T')[0]}_${end.toISOString().split('T')[0]}">${start.toLocaleDateString()} - ${end.toLocaleDateString()}</option>`;
-            }
-            select.innerHTML = options;
-        }
-
-        // US F-1 WORK COMPLIANCE COUNTER (20 Hours per Week Limit)
-        function renderVisaWorkCounter() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0,0,0,0);
-            
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            endOfWeek.setHours(23,59,59,999);
-
-            let currentWeekHrs = 0;
-            let thisMonthHrs = 0;
-
-            shiftEntries.forEach(s => {
-                const d = new Date(s.date);
-                if (d >= startOfWeek && d <= endOfWeek) {
-                    currentWeekHrs += Number(s.hours);
-                }
-                if (d.getMonth() === now.getMonth() && d.getFullYear() === currentYear) {
-                    thisMonthHrs += Number(s.hours);
-                }
-            });
-
-            const maxWeeklyHours = 20;
-            const pct = Math.min(100, (currentWeekHrs / maxWeeklyHours) * 100);
-
-            document.getElementById('visa-days-label').innerText = `${currentWeekHrs.toFixed(1)} / ${maxWeeklyHours} hrs this week`;
-            document.getElementById('visa-month-hrs').innerText = `This month: ${thisMonthHrs} hrs`;
-            
-            const progressBar = document.getElementById('visa-progress-bar');
-            progressBar.style.width = `${pct}%`;
-            if (currentWeekHrs > 20) progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
-            else progressBar.className = "bg-indigo-500 h-full rounded-full transition-all duration-500";
-        }
-
-        // RENDER EXPECTED EARNINGS STAGING LIST (WITH TAX CALCULATION)
-        function renderShiftStaging() {
-            const pendingList = document.getElementById('pending-shifts-list');
-            const pendingShifts = shiftEntries.filter(s => s.status === 'pending');
-            
-            // Net pending earnings after tax deduction %
-            const totalPendingNet = pendingShifts.reduce((sum, s) => {
-                const gross = Number(s.hours) * Number(s.hourly_rate);
-                const taxPct = Number(s.tax_percent) || 0;
-                return sum + (gross * (1 - taxPct / 100));
-            }, 0);
-
-            document.getElementById('pending-earnings-total').innerText = `+$${totalPendingNet.toFixed(2)} Net Draft`;
-            document.getElementById('visa-pending-income').innerText = `Pending Net: $${totalPendingNet.toFixed(2)}`;
-
-            if (shiftEntries.length === 0) {
-                pendingList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>`;
-            } else {
-                pendingList.innerHTML = shiftEntries.map(s => {
-                    const gross = Number(s.hours) * Number(s.hourly_rate);
-                    const taxPct = Number(s.tax_percent) || 0;
-                    const taxAmt = gross * (taxPct / 100);
-                    const net = gross - taxAmt;
-                    const isCredited = s.status === 'credited';
-
-                    return `
-                        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                            <div class="space-y-0.5">
-                                <div class="font-bold text-white">${s.date} • ${s.hours} hrs @ $${s.hourly_rate}/hr</div>
-                                <div class="text-[10px] text-slate-400">
-                                    Gross: $${gross.toFixed(2)} | Tax (${taxPct}%): -$${taxAmt.toFixed(2)} | <span class="${isCredited ? 'text-emerald-400' : 'text-indigo-400'} font-semibold">Net: $${net.toFixed(2)}</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                ${!isCredited ? `<button onclick="creditShiftPayout('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-lg transition text-[10px]">Credit</button>` : '<span class="text-emerald-400 font-medium text-[10px]">Credited</span>'}
-                                <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            lucide.createIcons();
-        }
-
-        // RENDER MONTHLY EXPENSE TRENDS BAR GRAPH
-        function renderExpenseBarGraph(monthTxs, totalDays) {
-            const graphContainer = document.getElementById('expense-bar-graph');
-            const dailyTotals = Array(totalDays).fill(0);
-            
-            monthTxs.forEach(t => {
-                const d = new Date(t.date);
-                const dayNum = d.getDate();
-                if (dayNum >= 1 && dayNum <= totalDays) dailyTotals[dayNum - 1] += Number(t.amount);
-            });
-
-            const maxAmt = Math.max(...dailyTotals, 20);
-            graphContainer.innerHTML = dailyTotals.map((amt, idx) => {
-                const heightPct = Math.min(100, Math.max(4, (amt / maxAmt) * 100));
-                const colorClass = amt > 0 ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-slate-800/40';
-                return `<div class="flex-1 flex flex-col justify-end items-center h-full group relative">
-                    <div class="absolute -top-7 bg-slate-900 border border-slate-700 text-white text-[9px] px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-20">Day ${idx + 1}: $${amt.toFixed(2)}</div>
-                    <div class="${colorClass} w-full rounded-t transition-all duration-300" style="height: ${heightPct}%"></div>
-                </div>`;
-            }).join('');
-        }
-
-        // RENDER CATEGORY BREAKDOWN
-        function renderCategoryBreakdown(monthTxs) {
-            const container = document.getElementById('category-breakdown-list');
-            if (monthTxs.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-2">No variable expenses logged yet.</div>`;
-                return;
-            }
-
-            const cats = {};
-            monthTxs.forEach(t => { cats[t.category] = (cats[t.category] || 0) + Number(t.amount); });
-
-            container.innerHTML = Object.entries(cats).map(([cat, amt]) => `
-                <div class="flex justify-between items-center text-slate-300 border-b border-slate-800/60 pb-1.5">
-                    <span>${cat}</span>
-                    <span class="font-bold text-indigo-400">$${amt.toFixed(2)}</span>
-                </div>
-            `).join('');
-        }
-
-        function updateUI() {
-            if (!userSettings) return;
-
-            const pool = Number(userSettings.monthly_budget) || 1500;
-            const rent = Number(userSettings.rent_cost) || 550;
-            const health = Number(userSettings.health_ins_cost) || 110;
-            const gezTotal = Number(userSettings.gez_cost) || 40.00;
-            const flatmates = Number(userSettings.flatmates) || 1;
-            const gezShare = gezTotal / flatmates;
-            const internet = Number(userSettings.internet_cost) || 50.00;
-
-            const totalFixed = rent + health + gezShare + internet;
-
-            // Render Bills Widget
-            document.getElementById('total-fixed-summary').innerText = `-$${totalFixed.toFixed(2)}`;
-            document.getElementById('bill-rent-val').innerText = `$${rent.toFixed(0)}`;
-            document.getElementById('bill-health-val').innerText = `$${health.toFixed(0)}`;
-            document.getElementById('bill-gez-val').innerText = `$${gezShare.toFixed(2)}`;
-            document.getElementById('bill-internet-val').innerText = `$${internet.toFixed(2)}`;
-
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            const monthTxs = transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-
-            const totalSpentThisMonth = monthTxs.reduce((sum, t) => sum + Number(t.amount), 0);
-            const todayStr = now.toISOString().split('T')[0];
-            const todaySpent = monthTxs.filter(t => t.date === todayStr).reduce((sum, t) => sum + Number(t.amount), 0);
-
-            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const remainingDays = lastDayOfMonth - now.getDate() + 1;
-
-            const variablePool = pool - totalFixed;
-            const netAvailablePool = variablePool - totalSpentThisMonth;
-            currentDailyLimit = remainingDays > 0 ? Math.max(0, netAvailablePool / remainingDays) : 0;
-
-            // Update Math Breakdown Card
-            document.getElementById('math-pool').innerText = `$${pool.toFixed(2)}`;
-            document.getElementById('math-fixed').innerText = `-$${totalFixed.toFixed(2)}`;
-            document.getElementById('math-variable').innerText = `$${variablePool.toFixed(2)}`;
-
-            document.getElementById('math-left-month').innerText = `$${Math.max(0, netAvailablePool).toFixed(2)}`;
-            document.getElementById('daily-limit-display').innerText = `$${currentDailyLimit.toFixed(2)}`;
-            document.getElementById('spent-today-label').innerText = `$${todaySpent.toFixed(2)}`;
-            document.getElementById('days-remaining-label').innerText = `${remainingDays} days left`;
-
-            const percentage = Math.min(100, (todaySpent / (currentDailyLimit || 1)) * 100);
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${percentage}%`;
-
-            const safetyBadge = document.getElementById('safety-badge');
-            if (todaySpent > currentDailyLimit && currentDailyLimit > 0) {
-                progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
-                safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                safetyBadge.innerText = "Over Budget";
-            } else {
-                progressBar.className = "bg-emerald-500 h-full rounded-full transition-all duration-500";
-                safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                safetyBadge.innerText = "Safe";
-            }
-
-            renderShiftStaging();
-            renderVisaWorkCounter();
-            renderExpenseBarGraph(monthTxs, lastDayOfMonth);
-            renderCategoryBreakdown(monthTxs);
-            renderTransactionsLists();
-            lucide.createIcons();
-        }
-
-        // RENDER TRANSACTIONS AND US TAX DEDUCTIBLE LIST
-        function renderTransactionsLists() {
-            const txList = document.getElementById('transactions-list');
-            const taxList = document.getElementById('tax-transactions-list');
-            const mode = document.getElementById('filter-mode').value;
-            let filteredTxs = transactions;
-
-            if (mode === 'month') {
-                const val = document.getElementById('filter-input-month').value;
-                if (val) filteredTxs = transactions.filter(t => t.date.startsWith(val));
-            } else if (mode === 'day') {
-                const val = document.getElementById('filter-input-day').value;
-                if (val) filteredTxs = transactions.filter(t => t.date === val);
-            } else if (mode === 'week') {
-                const val = document.getElementById('filter-input-week').value;
-                if (val) {
-                    const [start, end] = val.split('_');
-                    filteredTxs = transactions.filter(t => t.date >= start && t.date <= end);
-                }
-            }
-
-            document.getElementById('tx-count').innerText = `${filteredTxs.length} items`;
-
-            if (filteredTxs.length === 0) {
-                txList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No transactions logged for this period.</div>`;
-            } else {
-                txList.innerHTML = filteredTxs.map(t => `
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                        <div class="space-y-0.5">
-                            <div class="font-bold text-white">${t.description}</div>
-                            <div class="text-[10px] text-slate-400">${t.date} • <span class="text-indigo-400">${t.category}</span> ${t.is_tax_deductible ? '• <span class="text-emerald-400 font-medium">🇺🇸 US Tax Tagged</span>' : ''}</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-rose-400">-$${Number(t.amount).toFixed(2)}</span>
-                            <button onclick="openEditModal('${t.id}')" class="text-slate-400 hover:text-indigo-400 transition p-1"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                            <button onclick="deleteTransaction('${t.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // Tax tab rendering
-            const taxTxs = transactions.filter(t => t.is_tax_deductible);
-            document.getElementById('tax-count').innerText = `${taxTxs.length} items`;
-
-            if (taxTxs.length === 0) {
-                taxList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No IRS tax deductible items tagged yet.</div>`;
-            } else {
-                taxList.innerHTML = taxTxs.map(t => `
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                        <div class="space-y-0.5">
-                            <div class="font-bold text-white">${t.description}</div>
-                            <div class="text-[10px] text-slate-400">${t.date} • <span class="text-indigo-400">${t.category}</span></div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-emerald-400">$${Number(t.amount).toFixed(2)}</span>
-                            <button onclick="deleteTransaction('${t.id}')" title="Delete Tax Entry" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            lucide.createIcons();
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition";
-            });
-            document.querySelector(`[data-target="tab-${tabName}"]`).className = "nav-btn flex flex-col items-center gap-1 text-indigo-400 py-1 px-2.5 transition";
-        }
-
-        function openSettingsModal(isOnboarding = false) {
-            if (isOnboarding) {
-                document.getElementById('settings-modal-title').innerText = "Welcome! Complete Setup";
-            } else {
-                document.getElementById('settings-modal-title').innerText = "Settings & Profile";
-            }
-
-            if (userSettings) {
-                document.getElementById('set-name').value = userSettings.full_name || '';
-                document.getElementById('set-wage').value = userSettings.hourly_rate || 15.00;
-                document.getElementById('set-home-tz').value = userSettings.home_tz || 'America/New_York';
-                document.getElementById('set-flatmates').value = userSettings.flatmates || 1;
-                document.getElementById('set-pool').value = userSettings.monthly_budget || 1500;
-                document.getElementById('set-rent').value = userSettings.rent_cost || 550;
-                document.getElementById('set-health').value = userSettings.health_ins_cost || 110;
-                document.getElementById('set-gez').value = userSettings.gez_cost || 40.00;
-                document.getElementById('set-internet').value = userSettings.internet_cost || 50.00;
-            } else {
-                document.getElementById('set-wage').value = 15.00;
-                document.getElementById('set-flatmates').value = 1;
-                document.getElementById('set-pool').value = 1500;
-                document.getElementById('set-rent').value = 550;
-                document.getElementById('set-health').value = 110;
-                document.getElementById('set-gez').value = 40.00;
-                document.getElementById('set-internet').value = 50.00;
-            }
-            recalcFixedSum();
-            document.getElementById('settings-modal').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
-
-        function recalcFixedSum() {
-            const rent = parseFloat(document.getElementById('set-rent').value) || 0;
-            const health = parseFloat(document.getElementById('set-health').value) || 0;
-            const gezTotal = parseFloat(document.getElementById('set-gez').value) || 0;
-            const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
-            const internet = parseFloat(document.getElementById('set-internet').value) || 0;
-            
-            const gezShare = gezTotal / flatmates;
-            document.getElementById('set-total-fixed').innerText = `$${(rent + health + gezShare + internet).toFixed(2)}`;
-        }
-
-        document.getElementById('settings-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const full_name = document.getElementById('set-name').value;
-            const hourly_rate = parseFloat(document.getElementById('set-wage').value) || 15.00;
-            const home_tz = document.getElementById('set-home-tz').value;
-            const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
-            const monthly_budget = parseFloat(document.getElementById('set-pool').value);
-            const rent_cost = parseFloat(document.getElementById('set-rent').value) || 0;
-            const health_ins_cost = parseFloat(document.getElementById('set-health').value) || 0;
-            const gez_cost = parseFloat(document.getElementById('set-gez').value) || 40.00;
-            const internet_cost = parseFloat(document.getElementById('set-internet').value) || 50.00;
-            
-            const gezShare = gez_cost / flatmates;
-            const fixed_costs = rent_cost + health_ins_cost + gezShare + internet_cost;
-
-            const payload = { 
-                user_id: currentUser.id,
-                full_name, 
-                hourly_rate,
-                home_tz, 
-                flatmates,
-                monthly_budget, 
-                fixed_costs, 
-                rent_cost, 
-                health_ins_cost, 
-                gez_cost, 
-                internet_cost
-            };
-
-            let error = null;
-            if (userSettings) {
-                const res = await supabaseClient.from('settings').update(payload).eq('user_id', currentUser.id);
-                error = res.error;
-            } else {
-                const res = await supabaseClient.from('settings').insert([payload]);
-                error = res.error;
-            }
-
-            if (!error) {
-                userSettings = payload;
-                document.getElementById('shift-rate').value = hourly_rate;
-                document.getElementById('settings-close-btn').classList.remove('hidden');
-                closeSettingsModal();
-                loadUserData();
-            } else {
-                alert('Error saving settings: ' + error.message);
-            }
-        });
-
-        function exportTaxCSV() {
-            const taxTxs = transactions.filter(t => t.is_tax_deductible);
-            if (taxTxs.length === 0) { alert('No IRS tax deductible expenses found.'); return; }
-            let csvContent = "data:text/csv;charset=utf-8,Date,Category,Note,Amount (USD)\n";
-            taxTxs.forEach(t => { csvContent += `${t.date},${t.category},"${t.description}",${t.amount}\n`; });
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", "IRS_US_Student_Tax_Deductions.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function shareViaWhatsApp() {
-            const text = encodeURIComponent(`🇺🇸 CampusFinance Update:\nToday's Dynamic Allowance: $${currentDailyLimit.toFixed(2)}\nTracked via my Student Budget PWA!`);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        }
-    </script>
-</body>
-</html>

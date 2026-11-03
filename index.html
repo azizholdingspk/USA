@@ -1,1583 +1,1611 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CampusFinance 🇺🇸 Student Budget & Work Tracker</title>
+<!-- PWA Manifest & App Logo -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="/App%20Assets/US%20App%20Logo.png">
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    slate: { 850: '#0b1329', 900: '#0f172a', 950: '#020617' }
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Lucide Icons CDN -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+    body {
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-top: env(safe-area-inset-top);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+
+<!-- AUTHENTICATION SCREEN -->
+<div id="auth-screen" class="flex-1 flex flex-col justify-center items-center p-6 max-w-md w-full mx-auto">
+    <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+        <div class="text-center space-y-2">
+            <div class="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 mx-auto text-xl">
+                🇺🇸
+            </div>
+            <h1 class="text-xl font-bold text-white tracking-tight">CampusFinance US</h1>
+            <p class="text-xs text-slate-400">US Student Earn & Spend Budgeting</p>
+        </div>
+
+        <div id="auth-error" class="hidden bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl"></div>
+
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Email Address</label>
+                <input type="email" id="auth-email" required placeholder="student@university.edu" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Password</label>
+                <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-login" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-indigo-600/20">Sign In</button>
+                <button type="button" id="btn-signup" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-3 rounded-xl transition text-sm">Sign Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN APP WRAPPER -->
+<div id="app-wrapper" class="flex-1 flex flex-col max-w-md w-full mx-auto relative overflow-hidden hidden">
     
-    <!-- PWA Manifest & App Logo -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="/App%20Assets/US%20App%20Logo.png">
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: { 850: '#0b1329', 900: '#0f172a', 950: '#020617' }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        body {
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-top: env(safe-area-inset-top);
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body id="app-body" class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
-
-    <!-- AUTHENTICATION SCREEN -->
-    <div id="auth-screen" class="flex-1 flex flex-col justify-center items-center p-6 max-w-md w-full mx-auto">
-        <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
-            <div class="text-center space-y-2">
-                <div class="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 mx-auto text-xl">
-                    🇺🇸
-                </div>
-                <h1 class="text-xl font-bold text-white tracking-tight">CampusFinance US</h1>
-                <p class="text-xs text-slate-400">US Student Earn & Spend Budgeting</p>
+    <!-- HEADER WITH DUAL TIME ZONE DISPLAY & LOGOUT -->
+    <header class="px-4 py-3 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
+        <div class="min-w-0 pr-2">
+            <h1 id="greeting-label" class="text-sm font-bold tracking-tight text-white truncate">
+                Welcome!
+            </h1>
+            <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5 font-medium truncate">
+                <span id="time-germany" class="text-indigo-400 font-semibold shrink-0">🇺🇸 US (EST): --:--</span>
+                <span>•</span>
+                <span id="time-home" class="truncate">🇦🇪 UAE: --:--</span>
             </div>
-
-            <div id="auth-error" class="hidden bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl"></div>
-
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Email Address</label>
-                    <input type="email" id="auth-email" required placeholder="student@university.edu" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Password</label>
-                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button type="button" id="btn-login" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-indigo-600/20">Sign In</button>
-                    <button type="button" id="btn-signup" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-3 rounded-xl transition text-sm">Sign Up</button>
-                </div>
-            </form>
         </div>
-    </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="shareViaWhatsApp()" title="Share via WhatsApp" class="w-8 h-8 bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 hover:bg-emerald-600/30 transition">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+            </button>
+            <button onclick="openSettingsModal()" class="w-8 h-8 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+            </button>
+            <button onclick="handleLogout()" class="w-8 h-8 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-rose-400 hover:bg-rose-500/10 transition">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
 
-    <!-- MAIN APP WRAPPER -->
-    <div id="app-wrapper" class="flex-1 flex flex-col max-w-md w-full mx-auto relative overflow-hidden hidden">
-        
-        <!-- HEADER WITH DUAL TIME ZONE DISPLAY & LOGOUT -->
-        <header class="px-4 py-3 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
-            <div class="min-w-0 pr-2">
-                <h1 id="greeting-label" class="text-sm font-bold tracking-tight text-white truncate">
-                    Welcome!
-                </h1>
-                <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5 font-medium truncate">
-                    <span id="time-germany" class="text-indigo-400 font-semibold shrink-0">🇺🇸 US (EST): --:--</span>
-                    <span>•</span>
-                    <span id="time-home" class="truncate">🇦🇪 UAE: --:--</span>
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-4 no-scrollbar">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content space-y-4">
+            
+            <!-- Live Weather & Prayer Times Widget Bar -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center gap-2.5 shadow-md">
+                    <div id="weather-icon" class="text-2xl shrink-0">🌤️</div>
+                    <div class="min-w-0">
+                        <span id="weather-temp" class="text-sm font-bold text-white block truncate">--°F</span>
+                        <span id="weather-desc" class="text-[10px] text-slate-400 block truncate">Loading Weather...</span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-                <button onclick="shareViaWhatsApp()" title="Share via WhatsApp" class="w-8 h-8 bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 hover:bg-emerald-600/30 transition">
-                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                </button>
-                <button onclick="openSettingsModal()" class="w-8 h-8 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition">
-                    <i data-lucide="settings" class="w-4 h-4"></i>
-                </button>
-                <button onclick="handleLogout()" class="w-8 h-8 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-rose-400 hover:bg-rose-500/10 transition">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN SCROLLABLE CONTENT -->
-        <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-4 no-scrollbar">
-
-            <!-- TAB 1: DASHBOARD -->
-            <section id="tab-dashboard" class="tab-content space-y-4">
-                
-                <!-- Live Weather & Prayer Times Widget Bar -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center gap-2.5 shadow-md">
-                        <div id="weather-icon" class="text-2xl shrink-0">🌤️</div>
+                <div onclick="openPrayerModal()" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-md cursor-pointer hover:border-indigo-500/50 transition">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-8 h-8 bg-indigo-600/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 shrink-0">
+                            <i data-lucide="moon" class="w-4 h-4"></i>
+                        </div>
                         <div class="min-w-0">
-                            <span id="weather-temp" class="text-sm font-bold text-white block truncate">--°F</span>
-                            <span id="weather-desc" class="text-[10px] text-slate-400 block truncate">Loading Weather...</span>
+                            <span class="text-xs font-bold text-white block truncate">Prayer Times</span>
+                            <span id="next-prayer-label" class="text-[10px] text-indigo-400 block truncate">Loading...</span>
                         </div>
                     </div>
-                    <div onclick="openPrayerModal()" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-md cursor-pointer hover:border-indigo-500/50 transition">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <div class="w-8 h-8 bg-indigo-600/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 shrink-0">
-                                <i data-lucide="moon" class="w-4 h-4"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <span class="text-xs font-bold text-white block truncate">Prayer Times</span>
-                                <span id="next-prayer-label" class="text-[10px] text-indigo-400 block truncate">Loading...</span>
-                            </div>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 shrink-0 ml-1"></i>
-                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 shrink-0 ml-1"></i>
                 </div>
+            </div>
 
-                <!-- Dynamic Daily Allowance Hero Card -->
-                <div class="bg-gradient-to-br from-slate-900 to-slate-850 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden space-y-4">
-                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-600/10 rounded-full blur-2xl pointer-events-none"></div>
-                    
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase block">Today's Dynamic Allowance</span>
-                            <div class="flex items-baseline gap-1.5 mt-0.5">
-                                <h2 id="daily-limit-display" class="text-3xl font-extrabold tracking-tight text-white">$0.00</h2>
-                                <span class="text-xs text-slate-400">/ day</span>
-                            </div>
-                        </div>
-                        <span id="safety-badge" class="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Safe</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
-                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
-                            <span class="text-[10px] text-slate-400 block uppercase font-medium">Remaining Pool</span>
-                            <span id="math-left-month" class="text-sm font-extrabold text-emerald-400">$0.00</span>
-                        </div>
-                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
-                            <span class="text-[10px] text-slate-400 block uppercase font-medium">Spent Today</span>
-                            <span id="spent-today-label" class="text-sm font-extrabold text-indigo-400">$0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5 pt-1">
-                        <div class="flex justify-between text-[11px] text-slate-400 font-medium">
-                            <span>Daily Budget Usage</span>
-                            <span id="days-remaining-label">0 days left in month</span>
-                        </div>
-                        <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                            <div id="progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ADD FAMILY SUPPORT / MONEY RECEIVED CARD -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
-                        <i data-lucide="arrow-down-circle" class="w-4 h-4 text-emerald-400"></i> Add Support / Money Received
-                    </h3>
-                    <form id="income-form" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
-                                <input type="number" step="0.01" id="inc-amount" required placeholder="200.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Title / Source</label>
-                                <input type="text" id="inc-title" required placeholder="e.g. Dad Support, Brother..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date Received</label>
-                            <input type="date" id="inc-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-emerald-600/20">Add to Monthly Budget</button>
-                    </form>
-                </div>
-
-                <!-- Fixed Monthly Expenses Card -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="receipt" class="w-4 h-4 text-amber-400"></i> Fixed Monthly Expenses
-                        </h3>
-                        <span id="total-fixed-summary" class="text-xs font-extrabold text-amber-400">-$750.00</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
-                            <span class="text-slate-400">Rent / Housing</span>
-                            <span id="bill-rent-val" class="font-bold text-white">$550</span>
-                        </div>
-                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
-                            <span class="text-slate-400">Health Plan</span>
-                            <span id="bill-health-val" class="font-bold text-white">$110</span>
-                        </div>
-                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
-                            <span class="text-slate-400">Utilities</span>
-                            <span id="bill-gez-val" class="font-bold text-white">$40</span>
-                        </div>
-                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
-                            <span class="text-slate-400">Internet/Phone</span>
-                            <span id="bill-internet-val" class="font-bold text-white">$50</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Monthly Spending Graph Widget -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">📈 Monthly Expense Trends</h3>
-                        <span id="graph-month-label" class="text-[10px] text-indigo-400 font-medium">This Month</span>
-                    </div>
-                    <div id="expense-bar-graph" class="h-28 flex items-end gap-1 pt-4 pb-1 px-1 border-b border-slate-800"></div>
-                    <div class="flex justify-between text-[10px] text-slate-500 px-1">
-                        <span>Day 1</span>
-                        <span>Mid Month</span>
-                        <span>End</span>
-                    </div>
-                </div>
-
-                <!-- Monthly Breakdown Widget -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2 text-xs">
-                    <div class="font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
-                        <span>🧮 Monthly Math Breakdown</span>
-                        <span class="text-indigo-400 font-medium">Auto-Calculated</span>
-                    </div>
-                    <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
-                        <span>Monthly Allowance + Support</span>
-                        <span id="math-pool" class="font-bold text-white">$1,500.00</span>
-                    </div>
-                    <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
-                        <span>Total Fixed Costs (Rent + Health + Utilities)</span>
-                        <span id="math-fixed" class="font-bold text-amber-400">-$750.00</span>
-                    </div>
-                    <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
-                        <span>Variable Pool Left for Month</span>
-                        <span id="math-variable" class="font-bold text-indigo-400">$750.00</span>
-                    </div>
-                </div>
-
-                <!-- Category Breakdown Card -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Category Breakdown (This Month)</h3>
-                    <div id="category-breakdown-list" class="space-y-2 text-xs">
-                        <div class="text-slate-500 text-center py-2">No variable expenses logged yet.</div>
-                    </div>
-                </div>
-
-                <!-- Log Quick Expense Form -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i> Log Quick Expense
-                    </h3>
-                    <form id="expense-form" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
-                                <input type="number" step="0.01" id="exp-amount" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Category</label>
-                                <select id="exp-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                                    <option value="Food">🛒 Groceries / Dining</option>
-                                    <option value="Transport">🚌 Transit / Uber / Gas</option>
-                                    <option value="Study">📚 Books / Course Supplies</option>
-                                    <option value="Leisure">☕ Coffee / Entertainment</option>
-                                    <option value="Other">💡 Other Expenses</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Note (Optional)</label>
-                                <input type="text" id="exp-desc" placeholder="e.g. Campus Store, Walmart..." oninput="autoDetectTax(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
-                                <input type="date" id="exp-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between pt-1 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="landmark" class="w-4 h-4 text-indigo-400"></i>
-                                <span class="text-xs font-medium text-slate-300">IRS Tax Deductible 🇺🇸</span>
-                            </div>
-                            <input type="checkbox" id="exp-tax" class="w-4 h-4 accent-indigo-600 rounded bg-slate-950 border-slate-800">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-indigo-600/20">Add Expense</button>
-                    </form>
-                </div>
-
-            </section>
-
-            <!-- TAB 2: TRANSACTIONS HISTORY & FILTERING -->
-            <section id="tab-transactions" class="tab-content space-y-3 hidden">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">History & Filter</h2>
-                    <span id="tx-count" class="text-xs text-slate-500 font-medium">0 items</span>
-                </div>
-
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 grid grid-cols-2 gap-2 text-xs">
+            <!-- Dynamic Daily Allowance Hero Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-850 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden space-y-4">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-600/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div class="flex justify-between items-start">
                     <div>
-                        <label class="block text-[10px] text-slate-400 uppercase mb-1 font-bold">Filter Mode</label>
-                        <select id="filter-mode" onchange="toggleFilterMode()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500">
-                            <option value="month">📅 By Month</option>
-                            <option value="week">📊 By Week</option>
-                            <option value="day">📆 Specific Day</option>
-                        </select>
+                        <span class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase block">Today's Dynamic Allowance</span>
+                        <div class="flex items-baseline gap-1.5 mt-0.5">
+                            <h2 id="daily-limit-display" class="text-3xl font-extrabold tracking-tight text-white">$0.00</h2>
+                            <span class="text-xs text-slate-400">/ day</span>
+                        </div>
                     </div>
-                    <div>
-                        <label id="filter-value-label" class="block text-[10px] text-slate-400 uppercase mb-1 font-bold">Select Month</label>
-                        <input type="month" id="filter-input-month" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500">
-                        <input type="date" id="filter-input-day" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500 hidden">
-                        <select id="filter-input-week" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500 hidden"></select>
+                    <span id="safety-badge" class="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Safe</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Remaining Pool</span>
+                        <span id="math-left-month" class="text-sm font-extrabold text-emerald-400">$0.00</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">Spent Today</span>
+                        <span id="spent-today-label" class="text-sm font-extrabold text-indigo-400">$0.00</span>
                     </div>
                 </div>
 
-                <div id="transactions-list" class="space-y-2"></div>
-            </section>
-
-            <!-- TAB 3: WORK & F-1 VISA COMPLIANCE -->
-            <section id="tab-work" class="tab-content space-y-4 hidden">
-                <!-- F-1 VISA WORK COMPLIANCE COUNTER -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="scale" class="w-4 h-4 text-indigo-400"></i> US F-1 On-Campus Work Limit</span>
-                        <span id="visa-days-label" class="text-indigo-400 font-semibold">0 / 20 Hours</span>
+                <div class="space-y-1.5 pt-1">
+                    <div class="flex justify-between text-[11px] text-slate-400 font-medium">
+                        <span>Daily Budget Usage</span>
+                        <span id="days-remaining-label">0 days left in month</span>
                     </div>
-                    <div class="text-xs font-bold text-white tracking-tight">Max 20 Hours/Week (Session) • 40 Hours (Breaks)</div>
                     <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                        <div id="visa-progress-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-slate-400 pt-1">
-                        <span id="visa-month-hrs">This month: 0 hrs</span>
-                        <span id="visa-pending-income" class="text-emerald-400 font-medium">Pending Earnings: $0.00</span>
+                        <div id="progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
-
-                <!-- WORK SHIFT & EXPECTED EARNINGS STAGING CARD -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i> Log Campus Shift & Tax Deductions
-                        </h3>
-                    </div>
-
-                    <!-- Work Shift Entry Form with Tax % Option -->
-                    <form id="shift-form" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hours Worked</label>
-                                <input type="number" step="0.5" id="shift-hours" required placeholder="5.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
-                                <input type="date" id="shift-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
-                                <input type="number" step="0.50" id="shift-rate" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Tax Deducted (%)</label>
-                                <input type="number" step="0.1" id="shift-tax-percent" value="10.0" placeholder="10.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">Save Shift Draft</button>
-                    </form>
-                </div>
-
-                <!-- WORK SHIFTS HISTORY & PAYOUTS -->
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-xs px-1">
-                        <span class="font-bold text-slate-300 uppercase tracking-wider">Work Shifts History & Paychecks</span>
-                        <span id="pending-earnings-total" class="text-emerald-400 font-semibold">+$0.00 Draft</span>
-                    </div>
-                    <div id="pending-shifts-list" class="space-y-2">
-                        <div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 4: US TAX & IRS TRACKER -->
-            <section id="tab-tax" class="tab-content space-y-4 hidden">
-                <!-- IRS TAX ASSISTANCE & DEDUCTION HEADER -->
-                <div class="bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 rounded-2xl p-4 space-y-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🇺🇸</span>
-                        <h2 class="text-sm font-bold text-white">US Student IRS Tax & Deduction Tracker</h2>
-                    </div>
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                        Track eligible education expenses (<span class="text-indigo-400 font-medium">Textbooks, Course Software, Required Fees</span>) for standard US tax credits (<span class="text-indigo-400 font-medium">AOTC / Lifetime Learning Credit</span>) or Form 1040-NR deductions.
-                    </p>
-
-                    <!-- Key US Tax Compliance Checklist for F-1 & US Students -->
-                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1.5">
-                        <div class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">📌 Essential US Tax Filings:</div>
-                        <div class="flex items-start gap-1.5 text-slate-300">
-                            <span class="text-indigo-400 font-bold">•</span>
-                            <span><strong>Form 8843:</strong> Mandatory for all F-1/J-1 international students (even with $0 income).</span>
-                        </div>
-                        <div class="flex items-start gap-1.5 text-slate-300">
-                            <span class="text-indigo-400 font-bold">•</span>
-                            <span><strong>Form 1040-NR / 1040:</strong> Required for reporting US-sourced income & campus job wages.</span>
-                        </div>
-                        <div class="flex items-start gap-1.5 text-slate-300">
-                            <span class="text-indigo-400 font-bold">•</span>
-                            <span><strong>FICA Tax Exemption:</strong> F-1 students in valid status are exempt from Social Security & Medicare taxes for on-campus work.</span>
-                        </div>
-                    </div>
-
-                    <button onclick="exportTaxCSV()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-                        <i data-lucide="download" class="w-4 h-4"></i> Export Tax Deductions (.CSV for IRS Filing)
-                    </button>
-                </div>
-                
-                <div class="flex justify-between items-center text-xs px-1">
-                    <span class="font-bold text-slate-300 uppercase tracking-wider">Tax Deductible & Form Entries</span>
-                    <span id="tax-count" class="text-slate-500">0 items</span>
-                </div>
-                
-                <div id="tax-transactions-list" class="space-y-2"></div>
-            </section>
-
-        </main>
-
-        <!-- BOTTOM NAVIGATION BAR (4 TABS) -->
-        <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800/80 px-2 py-2 flex justify-around items-center z-30">
-            <button onclick="switchTab('dashboard')" class="nav-btn flex flex-col items-center gap-1 text-indigo-400 py-1 px-2.5 transition" data-target="tab-dashboard">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium">Dashboard</span>
-            </button>
-            <button onclick="switchTab('transactions')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-transactions">
-                <i data-lucide="receipt" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium">Expenses</span>
-            </button>
-            <button onclick="switchTab('work')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-work">
-                <i data-lucide="briefcase" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium">Work & F-1</span>
-            </button>
-            <button onclick="switchTab('tax')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-tax">
-                <i data-lucide="landmark" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium">US Tax & IRS</span>
-            </button>
-        </nav>
-    </div>
-
-    <!-- PRAYER TIMES MODAL -->
-    <div id="prayer-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">🕌</span>
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Prayer Schedule</h3>
-                </div>
-                <button onclick="closePrayerModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div id="prayer-list-content" class="space-y-2 text-xs">
-                <div class="text-slate-400 text-center py-4">Fetching prayer schedule...</div>
-            </div>
-            <div class="text-[10px] text-slate-500 text-center">Calculated for your current location.</div>
-        </div>
-    </div>
 
-    <!-- EDIT TRANSACTION MODAL -->
-    <div id="edit-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center">
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider">Edit Expense Entry</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="edit-form" class="space-y-3">
-                <input type="hidden" id="edit-id">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
-                        <input type="number" step="0.01" id="edit-amount" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Category</label>
-                        <select id="edit-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                            <option value="Food">🛒 Groceries / Dining</option>
-                            <option value="Transport">🚌 Transit / Uber / Gas</option>
-                            <option value="Study">📚 Books / Course Supplies</option>
-                            <option value="Leisure">☕ Coffee / Entertainment</option>
-                            <option value="Other">💡 Other Expenses</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Note (Optional)</label>
-                    <input type="text" id="edit-desc" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
-                    <input type="date" id="edit-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                </div>
-                <div class="flex items-center justify-between pt-1 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
-                    <span class="text-xs font-medium text-slate-300">Tax Deductible 🇺🇸</span>
-                    <input type="checkbox" id="edit-tax" class="w-4 h-4 accent-indigo-600 rounded bg-slate-950 border-slate-800">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg">Save Changes</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SETTINGS & ACCOUNT SECURITY MODAL -->
-    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <div>
-                    <h3 id="settings-modal-title" class="text-sm font-bold text-white uppercase tracking-wider">Settings & Profile</h3>
-                    <p class="text-[10px] text-slate-400">Manage budget, location & password</p>
-                </div>
-                <button id="settings-close-btn" onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            
-            <div class="space-y-6">
-                <!-- BUDGET & PROFILE FORM -->
-                <form id="settings-form" class="space-y-3">
-                    <div class="space-y-2 border-b border-slate-800 pb-3">
-                        <span class="text-[10px] uppercase font-bold text-indigo-400">Student Profile & Hourly Wage</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Full Name</label>
-                                <input type="text" id="set-name" required placeholder="Alex" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
-                                <input type="number" step="0.50" id="set-wage" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Home Time Zone</label>
-                                <select id="set-home-tz" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                                    <option value="Asia/Dubai">🇦🇪 UAE (GST)</option>
-                                    <option value="America/New_York">🇺🇸 US East (EST)</option>
-                                    <option value="America/Chicago">🇺🇸 US Central (CST)</option>
-                                    <option value="America/Los_Angeles">🇺🇸 US Pacific (PST)</option>
-                                    <option value="Asia/Karachi">🇵🇰 Pakistan (PKT)</option>
-                                    <option value="Asia/Kolkata">🇮🇳 India (IST)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Roommates (Utility Split)</label>
-                                <input type="number" min="1" id="set-flatmates" value="1" placeholder="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 border-b border-slate-800 pb-3">
-                        <span class="text-[10px] uppercase font-bold text-indigo-400">Monthly Allowance & Living Costs</span>
+            <!-- ADD FAMILY SUPPORT / MONEY RECEIVED CARD -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                    <i data-lucide="arrow-down-circle" class="w-4 h-4 text-emerald-400"></i> Add Support / Money Received
+                </h3>
+                <form id="income-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Monthly Allowance ($)</label>
-                            <input type="number" step="0.01" id="set-pool" required placeholder="1500.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
+                            <input type="number" step="0.01" id="inc-amount" required placeholder="200.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Rent / Room ($)</label>
-                                <input type="number" step="0.01" id="set-rent" placeholder="550.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Health Ins. ($)</label>
-                                <input type="number" step="0.01" id="set-health" placeholder="110.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Total Utilities ($)</label>
-                                <input type="number" step="0.01" id="set-gez" value="40.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">WiFi / Phone ($)</label>
-                                <input type="number" step="0.01" id="set-internet" placeholder="50.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between text-xs font-bold text-slate-300">
-                            <span>Calculated Share of Fixed Bills:</span>
-                            <span id="set-total-fixed" class="text-amber-400">$750.00</span>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Title / Source</label>
+                            <input type="text" id="inc-title" required placeholder="e.g. Dad Support, Brother..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
                         </div>
                     </div>
-
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">Save Profile & Budget</button>
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date Received</label>
+                        <input type="date" id="inc-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-emerald-600/20">Add to Monthly Budget</button>
                 </form>
+            </div>
 
-                <!-- ACCOUNT SECURITY SECTION (CHANGE PASSWORD) -->
-                <div class="space-y-3 pt-2">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-400"></i>
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Account Security & Password</h4>
-                    </div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
-                        Update your credentials to a secure private password. We recommend at least 12 characters combining letters, numbers, and symbols.
-                    </p>
-
-                    <div id="password-alert" class="hidden text-xs p-3 rounded-xl border"></div>
-
-                    <form id="password-form" class="space-y-3">
-                        <div class="relative">
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">New Private Password</label>
-                            <div class="relative">
-                                <input type="password" id="new-password" required placeholder="••••••••••••" oninput="evaluatePasswordStrength(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500">
-                                <button type="button" onclick="togglePasswordVisibility('new-password', 'eye-icon-1')" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
-                                    <i id="eye-icon-1" data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            <!-- Strength Indicator -->
-                            <div class="mt-1.5 flex items-center justify-between text-[10px]">
-                                <span class="text-slate-400">Strength: <strong id="strength-label" class="text-slate-500">None</strong></span>
-                                <span id="strength-reqs" class="text-slate-500">Min 12 chars recommended</span>
-                            </div>
-                            <div class="w-full bg-slate-950 h-1.5 rounded-full mt-1 overflow-hidden border border-slate-800">
-                                <div id="strength-bar" class="bg-slate-700 h-full w-0 transition-all duration-300"></div>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Confirm New Password</label>
-                            <div class="relative">
-                                <input type="password" id="confirm-password" required placeholder="••••••••••••" oninput="validatePasswordMatch()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500">
-                                <button type="button" onclick="togglePasswordVisibility('confirm-password', 'eye-icon-2')" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
-                                    <i id="eye-icon-2" data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            <span id="match-error" class="text-[10px] text-rose-400 hidden mt-1 block">Passwords do not match.</span>
-                        </div>
-
-                        <button type="submit" id="btn-update-password" disabled class="w-full bg-slate-800 text-slate-400 font-medium py-2.5 rounded-xl transition text-xs shadow-lg cursor-not-allowed">Update Password Securely</button>
-                    </form>
+            <!-- Fixed Monthly Expenses Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <i data-lucide="receipt" class="w-4 h-4 text-amber-400"></i> Fixed Monthly Expenses
+                    </h3>
+                    <span id="total-fixed-summary" class="text-xs font-extrabold text-amber-400">-$750.00</span>
                 </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
+                        <span class="text-slate-400">Rent / Housing</span>
+                        <span id="bill-rent-val" class="font-bold text-white">$550</span>
+                    </div>
+                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
+                        <span class="text-slate-400">Health Plan</span>
+                        <span id="bill-health-val" class="font-bold text-white">$110</span>
+                    </div>
+                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
+                        <span class="text-slate-400">Utilities</span>
+                        <span id="bill-gez-val" class="font-bold text-white">$40</span>
+                    </div>
+                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/60 flex justify-between">
+                        <span class="text-slate-400">Internet/Phone</span>
+                        <span id="bill-internet-val" class="font-bold text-white">$50</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Spending Graph Widget -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">📈 Monthly Expense Trends</h3>
+                    <span id="graph-month-label" class="text-[10px] text-indigo-400 font-medium">This Month</span>
+                </div>
+                <div id="expense-bar-graph" class="h-28 flex items-end gap-1 pt-4 pb-1 px-1 border-b border-slate-800"></div>
+                <div class="flex justify-between text-[10px] text-slate-500 px-1">
+                    <span>Day 1</span>
+                    <span>Mid Month</span>
+                    <span>End</span>
+                </div>
+            </div>
+
+            <!-- Monthly Breakdown Widget -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2 text-xs">
+                <div class="font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>🧮 Monthly Math Breakdown</span>
+                    <span class="text-indigo-400 font-medium">Auto-Calculated</span>
+                </div>
+                <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
+                    <span>Monthly Allowance + Support</span>
+                    <span id="math-pool" class="font-bold text-white">$1,500.00</span>
+                </div>
+                <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5">
+                    <span>Total Fixed Costs (Rent + Health + Utilities)</span>
+                    <span id="math-fixed" class="font-bold text-amber-400">-$750.00</span>
+                </div>
+                <div class="flex justify-between text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
+                    <span>Variable Pool Left for Month</span>
+                    <span id="math-variable" class="font-bold text-indigo-400">$750.00</span>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Category Breakdown (This Month)</h3>
+                <div id="category-breakdown-list" class="space-y-2 text-xs">
+                    <div class="text-slate-500 text-center py-2">No variable expenses logged yet.</div>
+                </div>
+            </div>
+
+            <!-- Log Quick Expense Form -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i> Log Quick Expense
+                </h3>
+                <form id="expense-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
+                            <input type="number" step="0.01" id="exp-amount" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Category</label>
+                            <select id="exp-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <option value="Food">🛒 Groceries / Dining</option>
+                                <option value="Transport">🚌 Transit / Uber / Gas</option>
+                                <option value="Study">📚 Books / Course Supplies</option>
+                                <option value="Leisure">☕ Coffee / Entertainment</option>
+                                <option value="Other">💡 Other Expenses</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Note (Optional)</label>
+                            <input type="text" id="exp-desc" placeholder="e.g. Campus Store, Walmart..." oninput="autoDetectTax(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
+                            <input type="date" id="exp-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-1 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="landmark" class="w-4 h-4 text-indigo-400"></i>
+                            <span class="text-xs font-medium text-slate-300">IRS Tax Deductible 🇺🇸</span>
+                        </div>
+                        <input type="checkbox" id="exp-tax" class="w-4 h-4 accent-indigo-600 rounded bg-slate-950 border-slate-800">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-sm shadow-lg shadow-indigo-600/20">Add Expense</button>
+                </form>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: TRANSACTIONS HISTORY & FILTERING -->
+        <section id="tab-transactions" class="tab-content space-y-3 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">History & Filter</h2>
+                <span id="tx-count" class="text-xs text-slate-500 font-medium">0 items</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 uppercase mb-1 font-bold">Filter Mode</label>
+                    <select id="filter-mode" onchange="toggleFilterMode()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <option value="month">📅 By Month</option>
+                        <option value="week">📊 By Week</option>
+                        <option value="day">📆 Specific Day</option>
+                    </select>
+                </div>
+                <div>
+                    <label id="filter-value-label" class="block text-[10px] text-slate-400 uppercase mb-1 font-bold">Select Month</label>
+                    <input type="month" id="filter-input-month" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <input type="date" id="filter-input-day" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500 hidden">
+                    <select id="filter-input-week" onchange="renderTransactionsLists()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-indigo-500 hidden"></select>
+                </div>
+            </div>
+
+            <div id="transactions-list" class="space-y-2"></div>
+        </section>
+
+        <!-- TAB 3: WORK & F-1 VISA COMPLIANCE -->
+        <section id="tab-work" class="tab-content space-y-4 hidden">
+            <!-- F-1 VISA WORK COMPLIANCE COUNTER -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="scale" class="w-4 h-4 text-indigo-400"></i> US F-1 On-Campus Work Limit</span>
+                    <span id="visa-days-label" class="text-indigo-400 font-semibold">0 / 20 Hours</span>
+                </div>
+                <div class="text-xs font-bold text-white tracking-tight">Max 20 Hours/Week (Session) • 40 Hours (Breaks)</div>
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                    <div id="visa-progress-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 pt-1">
+                    <span id="visa-month-hrs">This month: 0 hrs</span>
+                    <span id="visa-pending-income" class="text-emerald-400 font-medium">Pending Earnings: $0.00</span>
+                </div>
+            </div>
+
+            <!-- WORK SHIFT & EXPECTED EARNINGS STAGING CARD -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i> Log Campus Shift & Tax Deductions
+                    </h3>
+                </div>
+
+                <!-- Work Shift Entry Form with Tax % Option -->
+                <form id="shift-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hours Worked</label>
+                            <input type="number" step="0.5" id="shift-hours" required placeholder="5.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
+                            <input type="date" id="shift-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
+                            <input type="number" step="0.50" id="shift-rate" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Tax Deducted (%)</label>
+                            <input type="number" step="0.1" id="shift-tax-percent" value="10.0" placeholder="10.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">Save Shift Draft</button>
+                </form>
+            </div>
+
+            <!-- WORK SHIFTS HISTORY & PAYOUTS -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center text-xs px-1">
+                    <span class="font-bold text-slate-300 uppercase tracking-wider">Work Shifts History & Paychecks</span>
+                    <span id="pending-earnings-total" class="text-emerald-400 font-semibold">+$0.00 Draft</span>
+                </div>
+                <div id="pending-shifts-list" class="space-y-2">
+                    <div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: US TAX & IRS TRACKER -->
+        <section id="tab-tax" class="tab-content space-y-4 hidden">
+            <!-- IRS TAX ASSISTANCE & DEDUCTION HEADER -->
+            <div class="bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🇺🇸</span>
+                    <h2 class="text-sm font-bold text-white">US Student IRS Tax & Deduction Tracker</h2>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Track eligible education expenses (<span class="text-indigo-400 font-medium">Textbooks, Course Software, Required Fees</span>) for standard US tax credits (<span class="text-indigo-400 font-medium">AOTC / Lifetime Learning Credit</span>) or Form 1040-NR deductions.
+                </p>
+
+                <!-- Key US Tax Compliance Checklist for F-1 & US Students -->
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1.5">
+                    <div class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">📌 Essential US Tax Filings:</div>
+                    <div class="flex items-start gap-1.5 text-slate-300">
+                        <span class="text-indigo-400 font-bold">•</span>
+                        <span><strong>Form 8843:</strong> Mandatory for all F-1/J-1 international students (even with $0 income).</span>
+                    </div>
+                    <div class="flex items-start gap-1.5 text-slate-300">
+                        <span class="text-indigo-400 font-bold">•</span>
+                        <span><strong>Form 1040-NR / 1040:</strong> Required for reporting US-sourced income & campus job wages.</span>
+                    </div>
+                    <div class="flex items-start gap-1.5 text-slate-300">
+                        <span class="text-indigo-400 font-bold">•</span>
+                        <span><strong>FICA Tax Exemption:</strong> F-1 students in valid status are exempt from Social Security & Medicare taxes for on-campus work.</span>
+                    </div>
+                </div>
+
+                <button onclick="exportTaxCSV()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+                    <i data-lucide="download" class="w-4 h-4"></i> Export Tax Deductions (.CSV for IRS Filing)
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center text-xs px-1">
+                <span class="font-bold text-slate-300 uppercase tracking-wider">Tax Deductible & Form Entries</span>
+                <span id="tax-count" class="text-slate-500">0 items</span>
+            </div>
+            
+            <div id="tax-transactions-list" class="space-y-2"></div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR (4 TABS) -->
+    <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800/80 px-2 py-2 flex justify-around items-center z-30">
+        <button onclick="switchTab('dashboard')" class="nav-btn flex flex-col items-center gap-1 text-indigo-400 py-1 px-2.5 transition" data-target="tab-dashboard">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Dashboard</span>
+        </button>
+        <button onclick="switchTab('transactions')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-transactions">
+            <i data-lucide="receipt" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Expenses</span>
+        </button>
+        <button onclick="switchTab('work')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-work">
+            <i data-lucide="briefcase" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Work & F-1</span>
+        </button>
+        <button onclick="switchTab('tax')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition" data-target="tab-tax">
+            <i data-lucide="landmark" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">US Tax & IRS</span>
+        </button>
+    </nav>
+</div>
+
+<!-- PRAYER TIMES MODAL -->
+<div id="prayer-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🕌</span>
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider">Prayer Schedule</h3>
+            </div>
+            <button onclick="closePrayerModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div id="prayer-list-content" class="space-y-2 text-xs">
+            <div class="text-slate-400 text-center py-4">Fetching prayer schedule...</div>
+        </div>
+        <div class="text-[10px] text-slate-500 text-center">Calculated for your current location.</div>
+    </div>
+</div>
+
+<!-- EDIT TRANSACTION MODAL -->
+<div id="edit-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Edit Transaction Entry</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form id="edit-form" class="space-y-3">
+            <input type="hidden" id="edit-id">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Amount ($)</label>
+                    <input type="number" step="0.01" id="edit-amount" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Category / Type</label>
+                    <select id="edit-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="Support">💵 Support / Income</option>
+                        <option value="Food">🛒 Groceries / Dining</option>
+                        <option value="Transport">🚌 Transit / Uber / Gas</option>
+                        <option value="Study">📚 Books / Course Supplies</option>
+                        <option value="Leisure">☕ Coffee / Entertainment</option>
+                        <option value="Other">💡 Other Expenses</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Note / Title</label>
+                <input type="text" id="edit-desc" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Date</label>
+                <input type="date" id="edit-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- SETTINGS & ACCOUNT SECURITY MODAL -->
+<div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div>
+                <h3 id="settings-modal-title" class="text-sm font-bold text-white uppercase tracking-wider">Settings & Profile</h3>
+                <p class="text-[10px] text-slate-400">Manage budget, location & password</p>
+            </div>
+            <button id="settings-close-btn" onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        
+        <div class="space-y-6">
+            <!-- BUDGET & PROFILE FORM -->
+            <form id="settings-form" class="space-y-3">
+                <div class="space-y-2 border-b border-slate-800 pb-3">
+                    <span class="text-[10px] uppercase font-bold text-indigo-400">Student Profile & Hourly Wage</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Full Name</label>
+                            <input type="text" id="set-name" required placeholder="Alex" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Hourly Wage ($/hr)</label>
+                            <input type="number" step="0.50" id="set-wage" required placeholder="15.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Home Time Zone</label>
+                            <select id="set-home-tz" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                                <option value="Asia/Dubai">🇦🇪 UAE (GST)</option>
+                                <option value="America/New_York">🇺🇸 US East (EST)</option>
+                                <option value="America/Chicago">🇺🇸 US Central (CST)</option>
+                                <option value="America/Los_Angeles">🇺🇸 US Pacific (PST)</option>
+                                <option value="Asia/Karachi">🇵🇰 Pakistan (PKT)</option>
+                                <option value="Asia/Kolkata">🇮🇳 India (IST)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Roommates (Utility Split)</label>
+                            <input type="number" min="1" id="set-flatmates" value="1" placeholder="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 border-b border-slate-800 pb-3">
+                    <span class="text-[10px] uppercase font-bold text-indigo-400">Monthly Allowance & Living Costs</span>
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Monthly Allowance ($)</label>
+                        <input type="number" step="0.01" id="set-pool" required placeholder="1500.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Rent / Room ($)</label>
+                            <input type="number" step="0.01" id="set-rent" placeholder="550.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Health Ins. ($)</label>
+                            <input type="number" step="0.01" id="set-health" placeholder="110.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Total Utilities ($)</label>
+                            <input type="number" step="0.01" id="set-gez" value="40.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">WiFi / Phone ($)</label>
+                            <input type="number" step="0.01" id="set-internet" placeholder="50.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" oninput="recalcFixedSum()">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between text-xs font-bold text-slate-300">
+                        <span>Calculated Share of Fixed Bills:</span>
+                        <span id="set-total-fixed" class="text-amber-400">$750.00</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20">Save Profile & Budget</button>
+            </form>
+
+            <!-- ACCOUNT SECURITY SECTION (CHANGE PASSWORD) -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-400"></i>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Account Security & Password</h4>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    Update your credentials to a secure private password. We recommend at least 12 characters combining letters, numbers, and symbols.
+                </p>
+
+                <div id="password-alert" class="hidden text-xs p-3 rounded-xl border"></div>
+
+                <form id="password-form" class="space-y-3">
+                    <div class="relative">
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">New Private Password</label>
+                        <div class="relative">
+                            <input type="password" id="new-password" required placeholder="••••••••••••" oninput="evaluatePasswordStrength(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500">
+                            <button type="button" onclick="togglePasswordVisibility('new-password', 'eye-icon-1')" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+                                <i id="eye-icon-1" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <!-- Strength Indicator -->
+                        <div class="mt-1.5 flex items-center justify-between text-[10px]">
+                            <span class="text-slate-400">Strength: <strong id="strength-label" class="text-slate-500">None</strong></span>
+                            <span id="strength-reqs" class="text-slate-500">Min 12 chars recommended</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-1.5 rounded-full mt-1 overflow-hidden border border-slate-800">
+                            <div id="strength-bar" class="bg-slate-700 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Confirm New Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirm-password" required placeholder="••••••••••••" oninput="validatePasswordMatch()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500">
+                            <button type="button" onclick="togglePasswordVisibility('confirm-password', 'eye-icon-2')" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+                                <i id="eye-icon-2" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <span id="match-error" class="text-[10px] text-rose-400 hidden mt-1 block">Passwords do not match.</span>
+                    </div>
+
+                    <button type="submit" id="btn-update-password" disabled class="w-full bg-slate-800 text-slate-400 font-medium py-2.5 rounded-xl transition text-xs shadow-lg cursor-not-allowed">Update Password Securely</button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- APP LOGIC -->
-    <script>
-        const SUPABASE_URL = "https://dqtfdijjdrilqfxzazxm.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_aFd__E0qhjpGVjP_cE6DOA_eKXDELB-";
+<!-- APP LOGIC -->
+<script>
+    const SUPABASE_URL = "https://dqtfdijjdrilqfxzazxm.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_aFd__E0qhjpGVjP_cE6DOA_eKXDELB-";
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { 
-                persistSession: true, 
-                autoRefreshToken: true, 
-                detectSessionInUrl: true,
-                storage: window.localStorage
-            }
-        });
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { 
+            persistSession: true, 
+            autoRefreshToken: true, 
+            detectSessionInUrl: true,
+            storage: window.localStorage
+        }
+    });
 
-        let currentUser = null;
-        let userSettings = null;
-        let transactions = [];
-        let shiftEntries = [];
-        let currentDailyLimit = 0;
-        let todayPrayerData = null;
+    let currentUser = null;
+    let userSettings = null;
+    let transactions = [];
+    let shiftEntries = [];
+    let currentDailyLimit = 0;
+    let todayPrayerData = null;
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            lucide.createIcons();
-            setupAuthListeners();
-            setupPasswordListeners();
-            setupIncomeListener();
-            startDualClock();
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('exp-date').value = todayStr;
-            document.getElementById('shift-date').value = todayStr;
-            document.getElementById('inc-date').value = todayStr;
-            document.getElementById('filter-input-month').value = todayStr.substring(0, 7);
-            document.getElementById('filter-input-day').value = todayStr;
-            populateWeekDropdown();
+    window.addEventListener('DOMContentLoaded', async () => {
+        lucide.createIcons();
+        setupAuthListeners();
+        setupPasswordListeners();
+        setupIncomeListener();
+        startDualClock();
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('exp-date').value = todayStr;
+        document.getElementById('shift-date').value = todayStr;
+        document.getElementById('inc-date').value = todayStr;
+        document.getElementById('filter-input-month').value = todayStr.substring(0, 7);
+        document.getElementById('filter-input-day').value = todayStr;
+        populateWeekDropdown();
 
-            // RESTORE PERSISTENT SESSION AUTOMATICALLY
-            try {
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                if (session && session.user) {
-                    currentUser = session.user;
-                    showApp();
-                } else {
-                    showAuth();
-                }
-            } catch (err) {
-                console.error("Session restoration error:", err);
+        // RESTORE PERSISTENT SESSION AUTOMATICALLY
+        try {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                currentUser = session.user;
+                showApp();
+            } else {
                 showAuth();
             }
-
-            // Listen for auth state changes
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    currentUser = session.user;
-                    showApp();
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    showAuth();
-                }
-            });
-            
-            fetchLocationAndExternalData();
-        });
-
-        // PASSWORD STRENGTH & VALIDATION LOGIC
-        function evaluatePasswordStrength(password) {
-            const bar = document.getElementById('strength-bar');
-            const label = document.getElementById('strength-label');
-            const reqs = document.getElementById('strength-reqs');
-            
-            if (!password) {
-                bar.style.width = '0%';
-                bar.className = 'bg-slate-700 h-full w-0 transition-all duration-300';
-                label.innerText = 'None';
-                label.className = 'text-slate-500';
-                reqs.innerText = 'Min 12 chars recommended';
-                validatePasswordMatch();
-                return;
-            }
-
-            let score = 0;
-            if (password.length >= 8) score++;
-            if (password.length >= 12) score++;
-            if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
-            if (/[0-9]/.test(password)) score++;
-            if (/[^A-Za-z0-9]/.test(password)) score++;
-
-            if (score <= 2) {
-                bar.style.width = '33%';
-                bar.className = 'bg-rose-500 h-full transition-all duration-300';
-                label.innerText = 'Weak';
-                label.className = 'text-rose-400 font-bold';
-                reqs.innerText = 'Add numbers & symbols';
-            } else if (score <= 4) {
-                bar.style.width = '66%';
-                bar.className = 'bg-amber-500 h-full transition-all duration-300';
-                label.innerText = 'Medium';
-                label.className = 'text-amber-400 font-bold';
-                reqs.innerText = 'Good, make it longer';
-            } else {
-                bar.style.width = '100%';
-                bar.className = 'bg-emerald-500 h-full transition-all duration-300';
-                label.innerText = 'Strong';
-                label.className = 'text-emerald-400 font-bold';
-                reqs.innerText = 'Secure passphrase';
-            }
-            validatePasswordMatch();
-        }
-
-        function togglePasswordVisibility(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
-
-        function validatePasswordMatch() {
-            const p1 = document.getElementById('new-password').value;
-            const p2 = document.getElementById('confirm-password').value;
-            const matchError = document.getElementById('match-error');
-            const submitBtn = document.getElementById('btn-update-password');
-
-            const isMatch = p1 === p2 && p1.length >= 8;
-            if (p2.length > 0 && p1 !== p2) {
-                matchError.classList.remove('hidden');
-            } else {
-                matchError.classList.add('hidden');
-            }
-
-            if (isMatch) {
-                submitBtn.disabled = false;
-                submitBtn.className = "w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20 cursor-pointer";
-            } else {
-                submitBtn.disabled = true;
-                submitBtn.className = "w-full bg-slate-800 text-slate-400 font-medium py-2.5 rounded-xl transition text-xs shadow-lg cursor-not-allowed";
-            }
-        }
-
-        function setupPasswordListeners() {
-            const form = document.getElementById('password-form');
-            const alertBox = document.getElementById('password-alert');
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const newPassword = document.getElementById('new-password').value;
-                const confirmPassword = document.getElementById('confirm-password').value;
-
-                alertBox.classList.add('hidden');
-
-                if (newPassword !== confirmPassword) {
-                    alertBox.innerText = "Passwords do not match.";
-                    alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
-                    alertBox.classList.remove('hidden');
-                    return;
-                }
-
-                if (newPassword.length < 8) {
-                    alertBox.innerText = "Password must be at least 8 characters long.";
-                    alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
-                    alertBox.classList.remove('hidden');
-                    return;
-                }
-
-                const submitBtn = document.getElementById('btn-update-password');
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Updating Password...";
-
-                try {
-                    const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-                    if (error) throw error;
-
-                    alertBox.innerText = "Password updated successfully! Your account is now secured.";
-                    alertBox.className = "text-xs p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
-                    alertBox.classList.remove('hidden');
-                    form.reset();
-                    document.getElementById('strength-bar').style.width = '0%';
-                    document.getElementById('strength-label').innerText = 'None';
-                } catch (err) {
-                    alertBox.innerText = "Failed to update password: " + err.message;
-                    alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
-                    alertBox.classList.remove('hidden');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Update Password Securely";
-                }
-            });
-        }
-
-        // DUAL TIME ZONES CLOCK
-        function startDualClock() {
-            function updateClocks() {
-                const now = new Date();
-                const deTime = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false });
-                document.getElementById('time-germany').innerText = `🇺🇸 US: ${deTime}`;
-
-                const homeTz = (userSettings && userSettings.home_tz) ? userSettings.home_tz : 'Asia/Dubai';
-                const homeTime = now.toLocaleTimeString('en-US', { timeZone: homeTz, hour: '2-digit', minute: '2-digit', hour12: false });
-                
-                const flagMap = { 'Asia/Dubai': '🇦🇪 UAE', 'Asia/Karachi': '🇵🇰 PK', 'Asia/Kolkata': '🇮🇳 IN', 'America/New_York': '🇺🇸 EST' };
-                const label = flagMap[homeTz] || '🏠 Home';
-                document.getElementById('time-home').innerText = `${label}: ${homeTime}`;
-            }
-            updateClocks();
-            setInterval(updateClocks, 10000);
-        }
-
-        async function fetchLocationAndExternalData() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    fetchWeather(position.coords.latitude, position.coords.longitude);
-                    fetchPrayerTimes(position.coords.latitude, position.coords.longitude);
-                }, () => {
-                    fetchWeather(40.7128, -74.0060); // Default NYC
-                    fetchPrayerTimes(40.7128, -74.0060);
-                });
-            } else {
-                fetchWeather(40.7128, -74.0060);
-                fetchPrayerTimes(40.7128, -74.0060);
-            }
-        }
-
-        async function fetchWeather(lat, lon) {
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`);
-                const data = await res.json();
-                if (data && data.current_weather) {
-                    const temp = data.current_weather.temperature;
-                    document.getElementById('weather-temp').innerText = `${temp}°F`;
-                    document.getElementById('weather-desc').innerText = getWeatherCondition(data.current_weather.weathercode);
-                }
-            } catch (e) {
-                document.getElementById('weather-desc').innerText = 'Temp N/A';
-            }
-        }
-
-        function getWeatherCondition(code) {
-            if (code === 0) return "Clear ☀️";
-            if (code <= 3) return "Partly cloudy 🌤️";
-            if (code <= 48) return "Foggy 🌫️";
-            if (code <= 67) return "Rainy 🌧️";
-            if (code <= 77) return "Snowy ❄️";
-            return "Fair";
-        }
-
-        async function fetchPrayerTimes(lat = 40.7128, lon = -74.0060) {
-            try {
-                const today = new Date();
-                const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-                const res = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=2`);
-                const data = await res.json();
-                if (data && data.data) {
-                    todayPrayerData = data.data.timings;
-                    const hijri = data.data.date.hijri;
-                    updateNextPrayerDisplay();
-                    
-                    document.getElementById('prayer-list-content').innerHTML = `
-                        <div class="text-indigo-400 font-bold mb-2 pb-1 border-b border-slate-800">${hijri.day} ${hijri.month.en} ${hijri.year} AH</div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Fajr</span><span class="font-bold text-white">${todayPrayerData.Fajr}</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Dhuhr</span><span class="font-bold text-white">${todayPrayerData.Dhuhr}</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Asr</span><span class="font-bold text-white">${todayPrayerData.Asr}</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Maghrib</span><span class="font-bold text-white">${todayPrayerData.Maghrib}</span></div>
-                        <div class="flex justify-between py-1"><span>Isha</span><span class="font-bold text-white">${todayPrayerData.Isha}</span></div>
-                    `;
-                }
-            } catch (e) {
-                document.getElementById('next-prayer-label').innerText = 'Fajr 05:30 / Dhuhr 12:30';
-            }
-        }
-
-        function updateNextPrayerDisplay() {
-            if (!todayPrayerData) return;
-            const now = new Date();
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            const prayers = [
-                { name: 'Fajr', time: todayPrayerData.Fajr },
-                { name: 'Dhuhr', time: todayPrayerData.Dhuhr },
-                { name: 'Asr', time: todayPrayerData.Asr },
-                { name: 'Maghrib', time: todayPrayerData.Maghrib },
-                { name: 'Isha', time: todayPrayerData.Isha }
-            ];
-
-            let next = prayers[0];
-            for (let p of prayers) {
-                const [h, m] = p.time.split(':').map(Number);
-                if (currentTime < (h * 60 + m)) { next = p; break; }
-            }
-            document.getElementById('next-prayer-label').innerText = `${next.name} ${next.time}`;
-        }
-
-        function openPrayerModal() { document.getElementById('prayer-modal').classList.remove('hidden'); }
-        function closePrayerModal() { document.getElementById('prayer-modal').classList.add('hidden'); }
-
-        function showAuth() {
-            document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('app-wrapper').classList.add('hidden');
-        }
-
-        function showApp() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-wrapper').classList.remove('hidden');
-            loadUserData();
-        }
-
-        function setupAuthListeners() {
-            const errorDiv = document.getElementById('auth-error');
-
-            document.getElementById('btn-login').addEventListener('click', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('auth-email').value;
-                const password = document.getElementById('auth-password').value;
-                errorDiv.classList.add('hidden');
-
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) { errorDiv.innerText = error.message; errorDiv.classList.remove('hidden'); }
-                else { currentUser = data.user; showApp(); }
-            });
-
-            document.getElementById('btn-signup').addEventListener('click', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('auth-email').value;
-                const password = document.getElementById('auth-password').value;
-                errorDiv.classList.add('hidden');
-
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                if (error) { errorDiv.innerText = error.message; errorDiv.classList.remove('hidden'); }
-                else {
-                    alert('Signup successful! You are now logged in.');
-                    if(data.user) { currentUser = data.user; showApp(); }
-                }
-            });
-        }
-
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            currentUser = null;
+        } catch (err) {
+            console.error("Session restoration error:", err);
             showAuth();
         }
 
-        // LOAD USER DATA & SHIFTS
-        async function loadUserData() {
-            if (!currentUser) return;
-
-            let { data: settingsData } = await supabaseClient.from('settings').select('*').eq('user_id', currentUser.id).single();
-
-            if (!settingsData) {
-                document.getElementById('settings-close-btn').classList.add('hidden');
-                openSettingsModal(true);
-            } else {
-                userSettings = settingsData;
-                document.getElementById('settings-close-btn').classList.remove('hidden');
-                
-                document.getElementById('shift-rate').value = userSettings.hourly_rate || 15.00;
-
-                const displayName = userSettings.full_name ? userSettings.full_name : currentUser.email.split('@')[0];
-                const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-                
-                const hour = new Date().getHours();
-                let greeting = "Good evening 🌙";
-                if (hour < 12) greeting = "Good morning 🌅";
-                else if (hour < 18) greeting = "Good afternoon ☀️";
-
-                document.getElementById('greeting-label').innerText = `${greeting}, ${capitalizedName}!`;
-
-                let { data: txData } = await supabaseClient.from('transactions').select('*').eq('user_id', currentUser.id).order('date', { ascending: false });
-                transactions = txData || [];
-
-                let { data: shiftData } = await supabaseClient.from('shifts').select('*').eq('user_id', currentUser.id).order('date', { ascending: false });
-                shiftEntries = shiftData || [];
-
-                updateUI();
-            }
-        }
-
-        // HANDLE FAMILY SUPPORT / MONEY RECEIVED SUBMISSION
-        function setupIncomeListener() {
-            document.getElementById('income-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const amount = parseFloat(document.getElementById('inc-amount').value);
-                const title = document.getElementById('inc-title').value;
-                const date = document.getElementById('inc-date').value;
-
-                if (!currentUser || !userSettings) return;
-
-                // Add to user active budget pool
-                userSettings.monthly_budget = Number(userSettings.monthly_budget) + amount;
-                
-                // Update settings table in Supabase
-                const { error } = await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
-
-                if (!error) {
-                    document.getElementById('income-form').reset();
-                    document.getElementById('inc-date').value = new Date().toISOString().split('T')[0];
-                    updateUI();
-                } else {
-                    alert('Error adding support money: ' + error.message);
-                }
-            });
-        }
-
-        // WORK SHIFT ENTRY SUBMISSION (WITH TAX DEDUCTION PERCENTAGE)
-        document.getElementById('shift-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const date = document.getElementById('shift-date').value;
-            const hours = parseFloat(document.getElementById('shift-hours').value);
-            const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || Number(userSettings.hourly_rate) || 15.00;
-            const tax_percent = parseFloat(document.getElementById('shift-tax-percent').value) || 0;
-
-            const newShift = { user_id: currentUser.id, date, hours, hourly_rate, tax_percent, status: 'pending' };
-
-            const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select();
-            if (!error && data) {
-                shiftEntries.unshift(data[0]);
-                document.getElementById('shift-hours').value = '';
-                updateUI();
-            } else {
-                alert('Shift logging error: ' + (error ? error.message : 'Check database setup'));
+        // Listen for auth state changes
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                currentUser = session.user;
+                showApp();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                showAuth();
             }
         });
+        
+        fetchLocationAndExternalData();
+    });
 
-        // CREDIT SHIFT NET PAYOUT TO BUDGET POOL AFTER TAX DEDUCTION
-        async function creditShiftPayout(shiftId) {
-            const shift = shiftEntries.find(s => s.id === shiftId);
-            if (!shift) return;
-
-            const { error } = await supabaseClient.from('shifts').update({ status: 'credited' }).eq('id', shiftId);
-            if (!error) {
-                shift.status = 'credited';
-                
-                const gross = Number(shift.hours) * Number(shift.hourly_rate);
-                const taxPct = Number(shift.tax_percent) || 0;
-                const netEarnings = gross * (1 - (taxPct / 100));
-
-                userSettings.monthly_budget = Number(userSettings.monthly_budget) + netEarnings;
-                await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
-
-                updateUI();
-            }
+    // PASSWORD STRENGTH & VALIDATION LOGIC
+    function evaluatePasswordStrength(password) {
+        const bar = document.getElementById('strength-bar');
+        const label = document.getElementById('strength-label');
+        const reqs = document.getElementById('strength-reqs');
+        
+        if (!password) {
+            bar.style.width = '0%';
+            bar.className = 'bg-slate-700 h-full w-0 transition-all duration-300';
+            label.innerText = 'None';
+            label.className = 'text-slate-500';
+            reqs.innerText = 'Min 12 chars recommended';
+            validatePasswordMatch();
+            return;
         }
 
-        async function deleteShift(shiftId) {
-            const { error } = await supabaseClient.from('shifts').delete().eq('id', shiftId);
-            if (!error) {
-                shiftEntries = shiftEntries.filter(s => s.id !== shiftId);
-                updateUI();
-            }
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        if (score <= 2) {
+            bar.style.width = '33%';
+            bar.className = 'bg-rose-500 h-full transition-all duration-300';
+            label.innerText = 'Weak';
+            label.className = 'text-rose-400 font-bold';
+            reqs.innerText = 'Add numbers & symbols';
+        } else if (score <= 4) {
+            bar.style.width = '66%';
+            bar.className = 'bg-amber-500 h-full transition-all duration-300';
+            label.innerText = 'Medium';
+            label.className = 'text-amber-400 font-bold';
+            reqs.innerText = 'Good, make it longer';
+        } else {
+            bar.style.width = '100%';
+            bar.className = 'bg-emerald-500 h-full transition-all duration-300';
+            label.innerText = 'Strong';
+            label.className = 'text-emerald-400 font-bold';
+            reqs.innerText = 'Secure passphrase';
+        }
+        validatePasswordMatch();
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            input.type = 'password';
+            icon.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    }
+
+    function validatePasswordMatch() {
+        const p1 = document.getElementById('new-password').value;
+        const p2 = document.getElementById('confirm-password').value;
+        const matchError = document.getElementById('match-error');
+        const submitBtn = document.getElementById('btn-update-password');
+
+        const isMatch = p1 === p2 && p1.length >= 8;
+        if (p2.length > 0 && p1 !== p2) {
+            matchError.classList.remove('hidden');
+        } else {
+            matchError.classList.add('hidden');
         }
 
-        function autoDetectTax(desc) {
-            const taxKeywords = ['tuition', 'textbook', 'pearson', 'mcgraw', 'courseware', 'software', 'lab fee', 'university bookstore', 'macbook', 'laptop', 'health fee'];
-            document.getElementById('exp-tax').checked = taxKeywords.some(k => desc.toLowerCase().includes(k));
+        if (isMatch) {
+            submitBtn.disabled = false;
+            submitBtn.className = "w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition text-xs shadow-lg shadow-indigo-600/20 cursor-pointer";
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.className = "w-full bg-slate-800 text-slate-400 font-medium py-2.5 rounded-xl transition text-xs shadow-lg cursor-not-allowed";
         }
+    }
 
-        // EXPENSE LOGGING
-        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+    function setupPasswordListeners() {
+        const form = document.getElementById('password-form');
+        const alertBox = document.getElementById('password-alert');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const amount = parseFloat(document.getElementById('exp-amount').value);
-            const category = document.getElementById('exp-category').value;
-            const description = document.getElementById('exp-desc').value || category;
-            const date = document.getElementById('exp-date').value;
-            const isTaxDeductible = document.getElementById('exp-tax').checked;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
 
-            const newTx = { user_id: currentUser.id, date, amount, category, description, is_tax_deductible: isTaxDeductible };
+            alertBox.classList.add('hidden');
 
-            const { data, error } = await supabaseClient.from('transactions').insert([newTx]).select();
-            if (!error && data) {
-                transactions.unshift(data[0]);
-                document.getElementById('expense-form').reset();
-                document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
-                updateUI();
-            } else if (error) {
-                alert('Error adding expense: ' + error.message);
-            }
-        });
-
-        async function deleteTransaction(id) {
-            const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
-            if (!error) { transactions = transactions.filter(t => t.id !== id); updateUI(); }
-        }
-
-        function openEditModal(id) {
-            const tx = transactions.find(t => t.id === id);
-            if (!tx) return;
-            document.getElementById('edit-id').value = tx.id;
-            document.getElementById('edit-amount').value = tx.amount;
-            document.getElementById('edit-category').value = tx.category;
-            document.getElementById('edit-desc').value = tx.description;
-            document.getElementById('edit-date').value = tx.date;
-            document.getElementById('edit-tax').checked = tx.is_tax_deductible;
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
-        document.getElementById('edit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const updated = {
-                amount: parseFloat(document.getElementById('edit-amount').value),
-                category: document.getElementById('edit-category').value,
-                description: document.getElementById('edit-desc').value || document.getElementById('edit-category').value,
-                date: document.getElementById('edit-date').value,
-                is_tax_deductible: document.getElementById('edit-tax').checked
-            };
-
-            const { error } = await supabaseClient.from('transactions').update(updated).eq('id', id);
-            if (!error) {
-                const idx = transactions.findIndex(t => t.id === id);
-                if (idx !== -1) transactions[idx] = { ...transactions[idx], ...updated };
-                closeEditModal();
-                updateUI();
-            }
-        });
-
-        function toggleFilterMode() {
-            const mode = document.getElementById('filter-mode').value;
-            const label = document.getElementById('filter-value-label');
-            const mInput = document.getElementById('filter-input-month');
-            const dInput = document.getElementById('filter-input-day');
-            const wInput = document.getElementById('filter-input-week');
-
-            mInput.classList.add('hidden'); dInput.classList.add('hidden'); wInput.classList.add('hidden');
-
-            if (mode === 'month') { label.innerText = 'Select Month'; mInput.classList.remove('hidden'); }
-            else if (mode === 'day') { label.innerText = 'Select Day'; dInput.classList.remove('hidden'); }
-            else if (mode === 'week') { label.innerText = 'Select Week'; wInput.classList.remove('hidden'); populateWeekDropdown(); }
-            renderTransactionsLists();
-        }
-
-        function populateWeekDropdown() {
-            const select = document.getElementById('filter-input-week');
-            let options = '';
-            const now = new Date();
-            for (let i = 0; i < 4; i++) {
-                const start = new Date(now); start.setDate(now.getDate() - (i * 7) - now.getDay());
-                const end = new Date(start); end.setDate(start.getDate() + 6);
-                options += `<option value="${start.toISOString().split('T')[0]}_${end.toISOString().split('T')[0]}">${start.toLocaleDateString()} - ${end.toLocaleDateString()}</option>`;
-            }
-            select.innerHTML = options;
-        }
-
-        // US F-1 WORK COMPLIANCE COUNTER (20 Hours per Week Limit)
-        function renderVisaWorkCounter() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0,0,0,0);
-            
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            endOfWeek.setHours(23,59,59,999);
-
-            let currentWeekHrs = 0;
-            let thisMonthHrs = 0;
-
-            shiftEntries.forEach(s => {
-                const d = new Date(s.date);
-                if (d >= startOfWeek && d <= endOfWeek) {
-                    currentWeekHrs += Number(s.hours);
-                }
-                if (d.getMonth() === now.getMonth() && d.getFullYear() === currentYear) {
-                    thisMonthHrs += Number(s.hours);
-                }
-            });
-
-            const maxWeeklyHours = 20;
-            const pct = Math.min(100, (currentWeekHrs / maxWeeklyHours) * 100);
-
-            document.getElementById('visa-days-label').innerText = `${currentWeekHrs.toFixed(1)} / ${maxWeeklyHours} hrs this week`;
-            document.getElementById('visa-month-hrs').innerText = `This month: ${thisMonthHrs} hrs`;
-            
-            const progressBar = document.getElementById('visa-progress-bar');
-            progressBar.style.width = `${pct}%`;
-            if (currentWeekHrs > 20) progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
-            else progressBar.className = "bg-indigo-500 h-full rounded-full transition-all duration-500";
-        }
-
-        // RENDER EXPECTED EARNINGS STAGING LIST (WITH TAX CALCULATION)
-        function renderShiftStaging() {
-            const pendingList = document.getElementById('pending-shifts-list');
-            const pendingShifts = shiftEntries.filter(s => s.status === 'pending');
-            
-            // Net pending earnings after tax deduction %
-            const totalPendingNet = pendingShifts.reduce((sum, s) => {
-                const gross = Number(s.hours) * Number(s.hourly_rate);
-                const taxPct = Number(s.tax_percent) || 0;
-                return sum + (gross * (1 - taxPct / 100));
-            }, 0);
-
-            document.getElementById('pending-earnings-total').innerText = `+$${totalPendingNet.toFixed(2)} Net Draft`;
-            document.getElementById('visa-pending-income').innerText = `Pending Net: $${totalPendingNet.toFixed(2)}`;
-
-            if (shiftEntries.length === 0) {
-                pendingList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>`;
-            } else {
-                pendingList.innerHTML = shiftEntries.map(s => {
-                    const gross = Number(s.hours) * Number(s.hourly_rate);
-                    const taxPct = Number(s.tax_percent) || 0;
-                    const taxAmt = gross * (taxPct / 100);
-                    const net = gross - taxAmt;
-                    const isCredited = s.status === 'credited';
-
-                    return `
-                        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                            <div class="space-y-0.5">
-                                <div class="font-bold text-white">${s.date} • ${s.hours} hrs @ $${s.hourly_rate}/hr</div>
-                                <div class="text-[10px] text-slate-400">
-                                    Gross: $${gross.toFixed(2)} | Tax (${taxPct}%): -$${taxAmt.toFixed(2)} | <span class="${isCredited ? 'text-emerald-400' : 'text-indigo-400'} font-semibold">Net: $${net.toFixed(2)}</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                ${!isCredited ? `<button onclick="creditShiftPayout('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-lg transition text-[10px]">Credit</button>` : '<span class="text-emerald-400 font-medium text-[10px]">Credited</span>'}
-                                <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            lucide.createIcons();
-        }
-
-        // RENDER MONTHLY EXPENSE TRENDS BAR GRAPH
-        function renderExpenseBarGraph(monthTxs, totalDays) {
-            const graphContainer = document.getElementById('expense-bar-graph');
-            const dailyTotals = Array(totalDays).fill(0);
-            
-            monthTxs.forEach(t => {
-                const d = new Date(t.date);
-                const dayNum = d.getDate();
-                if (dayNum >= 1 && dayNum <= totalDays) dailyTotals[dayNum - 1] += Number(t.amount);
-            });
-
-            const maxAmt = Math.max(...dailyTotals, 20);
-            graphContainer.innerHTML = dailyTotals.map((amt, idx) => {
-                const heightPct = Math.min(100, Math.max(4, (amt / maxAmt) * 100));
-                const colorClass = amt > 0 ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-slate-800/40';
-                return `<div class="flex-1 flex flex-col justify-end items-center h-full group relative">
-                    <div class="absolute -top-7 bg-slate-900 border border-slate-700 text-white text-[9px] px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-20">Day ${idx + 1}: $${amt.toFixed(2)}</div>
-                    <div class="${colorClass} w-full rounded-t transition-all duration-300" style="height: ${heightPct}%"></div>
-                </div>`;
-            }).join('');
-        }
-
-        // RENDER CATEGORY BREAKDOWN
-        function renderCategoryBreakdown(monthTxs) {
-            const container = document.getElementById('category-breakdown-list');
-            if (monthTxs.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-2">No variable expenses logged yet.</div>`;
+            if (newPassword !== confirmPassword) {
+                alertBox.innerText = "Passwords do not match.";
+                alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
+                alertBox.classList.remove('hidden');
                 return;
             }
 
-            const cats = {};
-            monthTxs.forEach(t => { cats[t.category] = (cats[t.category] || 0) + Number(t.amount); });
+            if (newPassword.length < 8) {
+                alertBox.innerText = "Password must be at least 8 characters long.";
+                alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
+                alertBox.classList.remove('hidden');
+                return;
+            }
 
-            container.innerHTML = Object.entries(cats).map(([cat, amt]) => `
-                <div class="flex justify-between items-center text-slate-300 border-b border-slate-800/60 pb-1.5">
-                    <span>${cat}</span>
-                    <span class="font-bold text-indigo-400">$${amt.toFixed(2)}</span>
-                </div>
-            `).join('');
-        }
+            const submitBtn = document.getElementById('btn-update-password');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Updating Password...";
 
-        function updateUI() {
-            if (!userSettings) return;
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+                if (error) throw error;
 
-            const pool = Number(userSettings.monthly_budget) || 1500;
-            const rent = Number(userSettings.rent_cost) || 550;
-            const health = Number(userSettings.health_ins_cost) || 110;
-            const gezTotal = Number(userSettings.gez_cost) || 40.00;
-            const flatmates = Number(userSettings.flatmates) || 1;
-            const gezShare = gezTotal / flatmates;
-            const internet = Number(userSettings.internet_cost) || 50.00;
+                alertBox.innerText = "Password updated successfully! Your account is now secured.";
+                alertBox.className = "text-xs p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                alertBox.classList.remove('hidden');
+                form.reset();
+                document.getElementById('strength-bar').style.width = '0%';
+                document.getElementById('strength-label').innerText = 'None';
+            } catch (err) {
+                alertBox.innerText = "Failed to update password: " + err.message;
+                alertBox.className = "text-xs p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-rose-400";
+                alertBox.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Update Password Securely";
+            }
+        });
+    }
 
-            const totalFixed = rent + health + gezShare + internet;
-
-            // Render Bills Widget
-            document.getElementById('total-fixed-summary').innerText = `-$${totalFixed.toFixed(2)}`;
-            document.getElementById('bill-rent-val').innerText = `$${rent.toFixed(0)}`;
-            document.getElementById('bill-health-val').innerText = `$${health.toFixed(0)}`;
-            document.getElementById('bill-gez-val').innerText = `$${gezShare.toFixed(2)}`;
-            document.getElementById('bill-internet-val').innerText = `$${internet.toFixed(2)}`;
-
+    // DUAL TIME ZONES CLOCK
+    function startDualClock() {
+        function updateClocks() {
             const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const deTime = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('time-germany').innerText = `🇺🇸 US: ${deTime}`;
 
-            const monthTxs = transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            const homeTz = (userSettings && userSettings.home_tz) ? userSettings.home_tz : 'Asia/Dubai';
+            const homeTime = now.toLocaleTimeString('en-US', { timeZone: homeTz, hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            const flagMap = { 'Asia/Dubai': '🇦🇪 UAE', 'Asia/Karachi': '🇵🇰 PK', 'Asia/Kolkata': '🇮🇳 IN', 'America/New_York': '🇺🇸 EST' };
+            const label = flagMap[homeTz] || '🏠 Home';
+            document.getElementById('time-home').innerText = `${label}: ${homeTime}`;
+        }
+        updateClocks();
+        setInterval(updateClocks, 10000);
+    }
+
+    async function fetchLocationAndExternalData() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                fetchWeather(position.coords.latitude, position.coords.longitude);
+                fetchPrayerTimes(position.coords.latitude, position.coords.longitude);
+            }, () => {
+                fetchWeather(40.7128, -74.0060); // Default NYC
+                fetchPrayerTimes(40.7128, -74.0060);
             });
+        } else {
+            fetchWeather(40.7128, -74.0060);
+            fetchPrayerTimes(40.7128, -74.0060);
+        }
+    }
 
-            const totalSpentThisMonth = monthTxs.reduce((sum, t) => sum + Number(t.amount), 0);
-            const todayStr = now.toISOString().split('T')[0];
-            const todaySpent = monthTxs.filter(t => t.date === todayStr).reduce((sum, t) => sum + Number(t.amount), 0);
+    async function fetchWeather(lat, lon) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`);
+            const data = await res.json();
+            if (data && data.current_weather) {
+                const temp = data.current_weather.temperature;
+                document.getElementById('weather-temp').innerText = `${temp}°F`;
+                document.getElementById('weather-desc').innerText = getWeatherCondition(data.current_weather.weathercode);
+            }
+        } catch (e) {
+            document.getElementById('weather-desc').innerText = 'Temp N/A';
+        }
+    }
 
-            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const remainingDays = lastDayOfMonth - now.getDate() + 1;
+    function getWeatherCondition(code) {
+        if (code === 0) return "Clear ☀️";
+        if (code <= 3) return "Partly cloudy 🌤️";
+        if (code <= 48) return "Foggy 🌫️";
+        if (code <= 67) return "Rainy 🌧️";
+        if (code <= 77) return "Snowy ❄️";
+        return "Fair";
+    }
 
-            const variablePool = pool - totalFixed;
-            const netAvailablePool = variablePool - totalSpentThisMonth;
-            currentDailyLimit = remainingDays > 0 ? Math.max(0, netAvailablePool / remainingDays) : 0;
+    async function fetchPrayerTimes(lat = 40.7128, lon = -74.0060) {
+        try {
+            const today = new Date();
+            const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+            const res = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=2`);
+            const data = await res.json();
+            if (data && data.data) {
+                todayPrayerData = data.data.timings;
+                const hijri = data.data.date.hijri;
+                updateNextPrayerDisplay();
+                
+                document.getElementById('prayer-list-content').innerHTML = `
+                    <div class="text-indigo-400 font-bold mb-2 pb-1 border-b border-slate-800">${hijri.day} ${hijri.month.en} ${hijri.year} AH</div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Fajr</span><span class="font-bold text-white">${todayPrayerData.Fajr}</span></div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Dhuhr</span><span class="font-bold text-white">${todayPrayerData.Dhuhr}</span></div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Asr</span><span class="font-bold text-white">${todayPrayerData.Asr}</span></div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60"><span>Maghrib</span><span class="font-bold text-white">${todayPrayerData.Maghrib}</span></div>
+                    <div class="flex justify-between py-1"><span>Isha</span><span class="font-bold text-white">${todayPrayerData.Isha}</span></div>
+                `;
+            }
+        } catch (e) {
+            document.getElementById('next-prayer-label').innerText = 'Fajr 05:30 / Dhuhr 12:30';
+        }
+    }
 
-            // Update Math Breakdown Card
-            document.getElementById('math-pool').innerText = `$${pool.toFixed(2)}`;
-            document.getElementById('math-fixed').innerText = `-$${totalFixed.toFixed(2)}`;
-            document.getElementById('math-variable').innerText = `$${variablePool.toFixed(2)}`;
+    function updateNextPrayerDisplay() {
+        if (!todayPrayerData) return;
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const prayers = [
+            { name: 'Fajr', time: todayPrayerData.Fajr },
+            { name: 'Dhuhr', time: todayPrayerData.Dhuhr },
+            { name: 'Asr', time: todayPrayerData.Asr },
+            { name: 'Maghrib', time: todayPrayerData.Maghrib },
+            { name: 'Isha', time: todayPrayerData.Isha }
+        ];
 
-            document.getElementById('math-left-month').innerText = `$${Math.max(0, netAvailablePool).toFixed(2)}`;
-            document.getElementById('daily-limit-display').innerText = `$${currentDailyLimit.toFixed(2)}`;
-            document.getElementById('spent-today-label').innerText = `$${todaySpent.toFixed(2)}`;
-            document.getElementById('days-remaining-label').innerText = `${remainingDays} days left`;
+        let next = prayers[0];
+        for (let p of prayers) {
+            const [h, m] = p.time.split(':').map(Number);
+            if (currentTime < (h * 60 + m)) { next = p; break; }
+        }
+        document.getElementById('next-prayer-label').innerText = `${next.name} ${next.time}`;
+    }
 
-            const percentage = Math.min(100, (todaySpent / (currentDailyLimit || 1)) * 100);
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${percentage}%`;
+    function openPrayerModal() { document.getElementById('prayer-modal').classList.remove('hidden'); }
+    function closePrayerModal() { document.getElementById('prayer-modal').classList.add('hidden'); }
 
-            const safetyBadge = document.getElementById('safety-badge');
-            if (todaySpent > currentDailyLimit && currentDailyLimit > 0) {
-                progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
-                safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                safetyBadge.innerText = "Over Budget";
+    function showAuth() {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-wrapper').classList.add('hidden');
+    }
+
+    function showApp() {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-wrapper').classList.remove('hidden');
+        loadUserData();
+    }
+
+    function setupAuthListeners() {
+        const errorDiv = document.getElementById('auth-error');
+
+        document.getElementById('btn-login').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            errorDiv.classList.add('hidden');
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) { errorDiv.innerText = error.message; errorDiv.classList.remove('hidden'); }
+            else { currentUser = data.user; showApp(); }
+        });
+
+        document.getElementById('btn-signup').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            errorDiv.classList.add('hidden');
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) { errorDiv.innerText = error.message; errorDiv.classList.remove('hidden'); }
+            else {
+                alert('Signup successful! You are now logged in.');
+                if(data.user) { currentUser = data.user; showApp(); }
+            }
+        });
+    }
+
+    async function handleLogout() {
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        showAuth();
+    }
+
+    // LOAD USER DATA & SHIFTS
+    async function loadUserData() {
+        if (!currentUser) return;
+
+        let { data: settingsData } = await supabaseClient.from('settings').select('*').eq('user_id', currentUser.id).single();
+
+        if (!settingsData) {
+            document.getElementById('settings-close-btn').classList.add('hidden');
+            openSettingsModal(true);
+        } else {
+            userSettings = settingsData;
+            document.getElementById('settings-close-btn').classList.remove('hidden');
+            
+            document.getElementById('shift-rate').value = userSettings.hourly_rate || 15.00;
+
+            const displayName = userSettings.full_name ? userSettings.full_name : currentUser.email.split('@')[0];
+            const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+            
+            const hour = new Date().getHours();
+            let greeting = "Good evening 🌙";
+            if (hour < 12) greeting = "Good morning 🌅";
+            else if (hour < 18) greeting = "Good afternoon ☀️";
+
+            document.getElementById('greeting-label').innerText = `${greeting}, ${capitalizedName}!`;
+
+            let { data: txData } = await supabaseClient.from('transactions').select('*').eq('user_id', currentUser.id).order('date', { ascending: false });
+            transactions = txData || [];
+
+            let { data: shiftData } = await supabaseClient.from('shifts').select('*').eq('user_id', currentUser.id).order('date', { ascending: false });
+            shiftEntries = shiftData || [];
+
+            updateUI();
+        }
+    }
+
+    // HANDLE FAMILY SUPPORT / MONEY RECEIVED SUBMISSION (SAVED TO TRANSACTIONS)
+    function setupIncomeListener() {
+        document.getElementById('income-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('inc-amount').value);
+            const title = document.getElementById('inc-title').value;
+            const date = document.getElementById('inc-date').value;
+
+            if (!currentUser || !userSettings) return;
+
+            // Add to user active budget pool
+            userSettings.monthly_budget = Number(userSettings.monthly_budget) + amount;
+            
+            // Update settings table in Supabase
+            await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
+
+            // Save support entry into transactions history as positive income
+            const newIncomeTx = {
+                user_id: currentUser.id,
+                date,
+                amount,
+                category: 'Support',
+                description: title,
+                is_tax_deductible: false
+            };
+
+            const { data, error } = await supabaseClient.from('transactions').insert([newIncomeTx]).select();
+            if (!error && data) {
+                transactions.unshift(data[0]);
+                document.getElementById('income-form').reset();
+                document.getElementById('inc-date').value = new Date().toISOString().split('T')[0];
+                updateUI();
             } else {
-                progressBar.className = "bg-emerald-500 h-full rounded-full transition-all duration-500";
-                safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                safetyBadge.innerText = "Safe";
+                alert('Error recording support money: ' + (error ? error.message : 'Unknown error'));
+            }
+        });
+    }
+
+    // WORK SHIFT ENTRY SUBMISSION (WITH TAX DEDUCTION PERCENTAGE)
+    document.getElementById('shift-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const date = document.getElementById('shift-date').value;
+        const hours = parseFloat(document.getElementById('shift-hours').value);
+        const hourly_rate = parseFloat(document.getElementById('shift-rate').value) || Number(userSettings.hourly_rate) || 15.00;
+        const tax_percent = parseFloat(document.getElementById('shift-tax-percent').value) || 0;
+
+        const newShift = { user_id: currentUser.id, date, hours, hourly_rate, tax_percent, status: 'pending' };
+
+        const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select();
+        if (!error && data) {
+            shiftEntries.unshift(data[0]);
+            document.getElementById('shift-hours').value = '';
+            updateUI();
+        } else {
+            alert('Shift logging error: ' + (error ? error.message : 'Check database setup'));
+        }
+    });
+
+    // CREDIT SHIFT NET PAYOUT TO BUDGET POOL AFTER TAX DEDUCTION & LOG TO TRANSACTIONS HISTORY
+    async function creditShiftPayout(shiftId) {
+        const shift = shiftEntries.find(s => s.id === shiftId);
+        if (!shift || !currentUser) return;
+
+        const gross = Number(shift.hours) * Number(shift.hourly_rate);
+        const taxPct = Number(shift.tax_percent) || 0;
+        const netEarnings = gross * (1 - (taxPct / 100));
+
+        const { error } = await supabaseClient.from('shifts').update({ status: 'credited' }).eq('id', shiftId);
+        if (!error) {
+            shift.status = 'credited';
+            
+            userSettings.monthly_budget = Number(userSettings.monthly_budget) + netEarnings;
+            await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
+
+            // Automatically save credited work shift into transactions history as Support/Income
+            const shiftTx = {
+                user_id: currentUser.id,
+                date: shift.date,
+                amount: netEarnings,
+                category: 'Support',
+                description: `Work Payout (${shift.hours} hrs @ $${shift.hourly_rate}/hr)`,
+                is_tax_deductible: false
+            };
+
+            const { data: txData } = await supabaseClient.from('transactions').insert([shiftTx]).select();
+            if (txData) {
+                transactions.unshift(txData[0]);
             }
 
-            renderShiftStaging();
-            renderVisaWorkCounter();
-            renderExpenseBarGraph(monthTxs, lastDayOfMonth);
-            renderCategoryBreakdown(monthTxs);
-            renderTransactionsLists();
-            lucide.createIcons();
+            updateUI();
+        }
+    }
+
+    async function deleteShift(shiftId) {
+        const { error } = await supabaseClient.from('shifts').delete().eq('id', shiftId);
+        if (!error) {
+            shiftEntries = shiftEntries.filter(s => s.id !== shiftId);
+            updateUI();
+        }
+    }
+
+    function autoDetectTax(desc) {
+        const taxKeywords = ['tuition', 'textbook', 'pearson', 'mcgraw', 'courseware', 'software', 'lab fee', 'university bookstore', 'macbook', 'laptop', 'health fee'];
+        document.getElementById('exp-tax').checked = taxKeywords.some(k => desc.toLowerCase().includes(k));
+    }
+
+    // EXPENSE LOGGING
+    document.getElementById('expense-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('exp-amount').value);
+        const category = document.getElementById('exp-category').value;
+        const description = document.getElementById('exp-desc').value || category;
+        const date = document.getElementById('exp-date').value;
+        const isTaxDeductible = document.getElementById('exp-tax').checked;
+
+        const newTx = { user_id: currentUser.id, date, amount, category, description, is_tax_deductible: isTaxDeductible };
+
+        const { data, error } = await supabaseClient.from('transactions').insert([newTx]).select();
+        if (!error && data) {
+            transactions.unshift(data[0]);
+            document.getElementById('expense-form').reset();
+            document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+            updateUI();
+        } else if (error) {
+            alert('Error adding expense: ' + error.message);
+        }
+    });
+
+    // DELETE TRANSACTION AND RECALCULATE AUTOMATICALLY
+    async function deleteTransaction(id) {
+        const txToDelete = transactions.find(t => t.id === id);
+        const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
+        
+        if (!error) { 
+            // If deleting an Income/Support transaction, subtract that amount from the active budget pool
+            if (txToDelete && txToDelete.category === 'Support') {
+                userSettings.monthly_budget = Math.max(0, Number(userSettings.monthly_budget) - Number(txToDelete.amount));
+                await supabaseClient.from('settings').update({ monthly_budget: userSettings.monthly_budget }).eq('user_id', currentUser.id);
+            }
+
+            transactions = transactions.filter(t => t.id !== id); 
+            updateUI(); 
+        }
+    }
+
+    function openEditModal(id) {
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return;
+        document.getElementById('edit-id').value = tx.id;
+        document.getElementById('edit-amount').value = tx.amount;
+        document.getElementById('edit-category').value = tx.category;
+        document.getElementById('edit-desc').value = tx.description;
+        document.getElementById('edit-date').value = tx.date;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-id').value;
+        const updated = {
+            amount: parseFloat(document.getElementById('edit-amount').value),
+            category: document.getElementById('edit-category').value,
+            description: document.getElementById('edit-desc').value || document.getElementById('edit-category').value,
+            date: document.getElementById('edit-date').value
+        };
+
+        const { error } = await supabaseClient.from('transactions').update(updated).eq('id', id);
+        if (!error) {
+            const idx = transactions.findIndex(t => t.id === id);
+            if (idx !== -1) transactions[idx] = { ...transactions[idx], ...updated };
+            closeEditModal();
+            updateUI();
+        }
+    });
+
+    function toggleFilterMode() {
+        const mode = document.getElementById('filter-mode').value;
+        const label = document.getElementById('filter-value-label');
+        const mInput = document.getElementById('filter-input-month');
+        const dInput = document.getElementById('filter-input-day');
+        const wInput = document.getElementById('filter-input-week');
+
+        mInput.classList.add('hidden'); dInput.classList.add('hidden'); wInput.classList.add('hidden');
+
+        if (mode === 'month') { label.innerText = 'Select Month'; mInput.classList.remove('hidden'); }
+        else if (mode === 'day') { label.innerText = 'Select Day'; dInput.classList.remove('hidden'); }
+        else if (mode === 'week') { label.innerText = 'Select Week'; wInput.classList.remove('hidden'); populateWeekDropdown(); }
+        renderTransactionsLists();
+    }
+
+    function populateWeekDropdown() {
+        const select = document.getElementById('filter-input-week');
+        let options = '';
+        const now = new Date();
+        for (let i = 0; i < 4; i++) {
+            const start = new Date(now); start.setDate(now.getDate() - (i * 7) - now.getDay());
+            const end = new Date(start); end.setDate(start.getDate() + 6);
+            options += `<option value="${start.toISOString().split('T')[0]}_${end.toISOString().split('T')[0]}">${start.toLocaleDateString()} - ${end.toLocaleDateString()}</option>`;
+        }
+        select.innerHTML = options;
+    }
+
+    // US F-1 WORK COMPLIANCE COUNTER (20 Hours per Week Limit)
+    function renderVisaWorkCounter() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0,0,0,0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23,59,59,999);
+
+        let currentWeekHrs = 0;
+        let thisMonthHrs = 0;
+
+        shiftEntries.forEach(s => {
+            const d = new Date(s.date);
+            if (d >= startOfWeek && d <= endOfWeek) {
+                currentWeekHrs += Number(s.hours);
+            }
+            if (d.getMonth() === now.getMonth() && d.getFullYear() === currentYear) {
+                thisMonthHrs += Number(s.hours);
+            }
+        });
+
+        const maxWeeklyHours = 20;
+        const pct = Math.min(100, (currentWeekHrs / maxWeeklyHours) * 100);
+
+        document.getElementById('visa-days-label').innerText = `${currentWeekHrs.toFixed(1)} / ${maxWeeklyHours} hrs this week`;
+        document.getElementById('visa-month-hrs').innerText = `This month: ${thisMonthHrs} hrs`;
+        
+        const progressBar = document.getElementById('visa-progress-bar');
+        progressBar.style.width = `${pct}%`;
+        if (currentWeekHrs > 20) progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
+        else progressBar.className = "bg-indigo-500 h-full rounded-full transition-all duration-500";
+    }
+
+    // RENDER EXPECTED EARNINGS STAGING LIST (WITH TAX CALCULATION)
+    function renderShiftStaging() {
+        const pendingList = document.getElementById('pending-shifts-list');
+        const pendingShifts = shiftEntries.filter(s => s.status === 'pending');
+        
+        const totalPendingNet = pendingShifts.reduce((sum, s) => {
+            const gross = Number(s.hours) * Number(s.hourly_rate);
+            const taxPct = Number(s.tax_percent) || 0;
+            return sum + (gross * (1 - taxPct / 100));
+        }, 0);
+
+        document.getElementById('pending-earnings-total').innerText = `+$${totalPendingNet.toFixed(2)} Net Draft`;
+        document.getElementById('visa-pending-income').innerText = `Pending Net: $${totalPendingNet.toFixed(2)}`;
+
+        if (shiftEntries.length === 0) {
+            pendingList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No shifts logged yet.</div>`;
+        } else {
+            pendingList.innerHTML = shiftEntries.map(s => {
+                const gross = Number(s.hours) * Number(s.hourly_rate);
+                const taxPct = Number(s.tax_percent) || 0;
+                const taxAmt = gross * (taxPct / 100);
+                const net = gross - taxAmt;
+                const isCredited = s.status === 'credited';
+
+                return `
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                        <div class="space-y-0.5">
+                            <div class="font-bold text-white">${s.date} • ${s.hours} hrs @ $${s.hourly_rate}/hr</div>
+                            <div class="text-[10px] text-slate-400">
+                                Gross: $${gross.toFixed(2)} | Tax (${taxPct}%): -$${taxAmt.toFixed(2)} | <span class="${isCredited ? 'text-emerald-400' : 'text-indigo-400'} font-semibold">Net: $${net.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${!isCredited ? `<button onclick="creditShiftPayout('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-lg transition text-[10px]">Credit</button>` : '<span class="text-emerald-400 font-medium text-[10px]">Credited</span>'}
+                            <button onclick="deleteShift('${s.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        lucide.createIcons();
+    }
+
+    // RENDER MONTHLY EXPENSE TRENDS BAR GRAPH (EXCLUDES SUPPORT INCOME)
+    function renderExpenseBarGraph(monthTxs, totalDays) {
+        const graphContainer = document.getElementById('expense-bar-graph');
+        const dailyTotals = Array(totalDays).fill(0);
+        
+        monthTxs.forEach(t => {
+            if (t.category === 'Support') return;
+            const d = new Date(t.date);
+            const dayNum = d.getDate();
+            if (dayNum >= 1 && dayNum <= totalDays) dailyTotals[dayNum - 1] += Number(t.amount);
+        });
+
+        const maxAmt = Math.max(...dailyTotals, 20);
+        graphContainer.innerHTML = dailyTotals.map((amt, idx) => {
+            const heightPct = Math.min(100, Math.max(4, (amt / maxAmt) * 100));
+            const colorClass = amt > 0 ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-slate-800/40';
+            return `<div class="flex-1 flex flex-col justify-end items-center h-full group relative">
+                <div class="absolute -top-7 bg-slate-900 border border-slate-700 text-white text-[9px] px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-20">Day ${idx + 1}: $${amt.toFixed(2)}</div>
+                <div class="${colorClass} w-full rounded-t transition-all duration-300" style="height: ${heightPct}%"></div>
+            </div>`;
+        }).join('');
+    }
+
+    // RENDER CATEGORY BREAKDOWN (EXCLUDES SUPPORT INCOME)
+    function renderCategoryBreakdown(monthTxs) {
+        const container = document.getElementById('category-breakdown-list');
+        const expenseTxs = monthTxs.filter(t => t.category !== 'Support');
+
+        if (expenseTxs.length === 0) {
+            container.innerHTML = `<div class="text-slate-500 text-center py-2">No variable expenses logged yet.</div>`;
+            return;
         }
 
-        // RENDER TRANSACTIONS AND US TAX DEDUCTIBLE LIST
-        function renderTransactionsLists() {
-            const txList = document.getElementById('transactions-list');
-            const taxList = document.getElementById('tax-transactions-list');
-            const mode = document.getElementById('filter-mode').value;
-            let filteredTxs = transactions;
+        const cats = {};
+        expenseTxs.forEach(t => { cats[t.category] = (cats[t.category] || 0) + Number(t.amount); });
 
-            if (mode === 'month') {
-                const val = document.getElementById('filter-input-month').value;
-                if (val) filteredTxs = transactions.filter(t => t.date.startsWith(val));
-            } else if (mode === 'day') {
-                const val = document.getElementById('filter-input-day').value;
-                if (val) filteredTxs = transactions.filter(t => t.date === val);
-            } else if (mode === 'week') {
-                const val = document.getElementById('filter-input-week').value;
-                if (val) {
-                    const [start, end] = val.split('_');
-                    filteredTxs = transactions.filter(t => t.date >= start && t.date <= end);
-                }
+        container.innerHTML = Object.entries(cats).map(([cat, amt]) => `
+            <div class="flex justify-between items-center text-slate-300 border-b border-slate-800/60 pb-1.5">
+                <span>${cat}</span>
+                <span class="font-bold text-indigo-400">$${amt.toFixed(2)}</span>
+            </div>
+        `).join('');
+    }
+
+    function updateUI() {
+        if (!userSettings) return;
+
+        const pool = Number(userSettings.monthly_budget) || 1500;
+        const rent = Number(userSettings.rent_cost) || 550;
+        const health = Number(userSettings.health_ins_cost) || 110;
+        const gezTotal = Number(userSettings.gez_cost) || 40.00;
+        const flatmates = Number(userSettings.flatmates) || 1;
+        const gezShare = gezTotal / flatmates;
+        const internet = Number(userSettings.internet_cost) || 50.00;
+
+        const totalFixed = rent + health + gezShare + internet;
+
+        document.getElementById('total-fixed-summary').innerText = `-$${totalFixed.toFixed(2)}`;
+        document.getElementById('bill-rent-val').innerText = `$${rent.toFixed(0)}`;
+        document.getElementById('bill-health-val').innerText = `$${health.toFixed(0)}`;
+        document.getElementById('bill-gez-val').innerText = `$${gezShare.toFixed(2)}`;
+        document.getElementById('bill-internet-val').innerText = `$${internet.toFixed(2)}`;
+
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const monthTxs = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
+
+        const expenseTxs = monthTxs.filter(t => t.category !== 'Support');
+        const totalSpentThisMonth = expenseTxs.reduce((sum, t) => sum + Number(t.amount), 0);
+        const todayStr = now.toISOString().split('T')[0];
+        const todaySpent = expenseTxs.filter(t => t.date === todayStr).reduce((sum, t) => sum + Number(t.amount), 0);
+
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const remainingDays = lastDayOfMonth - now.getDate() + 1;
+
+        const variablePool = pool - totalFixed;
+        const netAvailablePool = variablePool - totalSpentThisMonth;
+        currentDailyLimit = remainingDays > 0 ? Math.max(0, netAvailablePool / remainingDays) : 0;
+
+        document.getElementById('math-pool').innerText = `$${pool.toFixed(2)}`;
+        document.getElementById('math-fixed').innerText = `-$${totalFixed.toFixed(2)}`;
+        document.getElementById('math-variable').innerText = `$${variablePool.toFixed(2)}`;
+
+        document.getElementById('math-left-month').innerText = `$${Math.max(0, netAvailablePool).toFixed(2)}`;
+        document.getElementById('daily-limit-display').innerText = `$${currentDailyLimit.toFixed(2)}`;
+        document.getElementById('spent-today-label').innerText = `$${todaySpent.toFixed(2)}`;
+        document.getElementById('days-remaining-label').innerText = `${remainingDays} days left`;
+
+        const percentage = Math.min(100, (todaySpent / (currentDailyLimit || 1)) * 100);
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.style.width = `${percentage}%`;
+
+        const safetyBadge = document.getElementById('safety-badge');
+        if (todaySpent > currentDailyLimit && currentDailyLimit > 0) {
+            progressBar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
+            safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+            safetyBadge.innerText = "Over Budget";
+        } else {
+            progressBar.className = "bg-emerald-500 h-full rounded-full transition-all duration-500";
+            safetyBadge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            safetyBadge.innerText = "Safe";
+        }
+
+        renderShiftStaging();
+        renderVisaWorkCounter();
+        renderExpenseBarGraph(monthTxs, lastDayOfMonth);
+        renderCategoryBreakdown(monthTxs);
+        renderTransactionsLists();
+        lucide.createIcons();
+    }
+
+    // RENDER TRANSACTIONS (BOTH EXPENSES & FAMILY SUPPORT / INCOME)
+    function renderTransactionsLists() {
+        const txList = document.getElementById('transactions-list');
+        const taxList = document.getElementById('tax-transactions-list');
+        const mode = document.getElementById('filter-mode').value;
+        let filteredTxs = transactions;
+
+        if (mode === 'month') {
+            const val = document.getElementById('filter-input-month').value;
+            if (val) filteredTxs = transactions.filter(t => t.date.startsWith(val));
+        } else if (mode === 'day') {
+            const val = document.getElementById('filter-input-day').value;
+            if (val) filteredTxs = transactions.filter(t => t.date === val);
+        } else if (mode === 'week') {
+            const val = document.getElementById('filter-input-week').value;
+            if (val) {
+                const [start, end] = val.split('_');
+                filteredTxs = transactions.filter(t => t.date >= start && t.date <= end);
             }
+        }
 
-            document.getElementById('tx-count').innerText = `${filteredTxs.length} items`;
+        document.getElementById('tx-count').innerText = `${filteredTxs.length} items`;
 
-            if (filteredTxs.length === 0) {
-                txList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No transactions logged for this period.</div>`;
-            } else {
-                txList.innerHTML = filteredTxs.map(t => `
+        if (filteredTxs.length === 0) {
+            txList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No transactions logged for this period.</div>`;
+        } else {
+            txList.innerHTML = filteredTxs.map(t => {
+                const isIncome = t.category === 'Support';
+                return `
                     <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
                         <div class="space-y-0.5">
                             <div class="font-bold text-white">${t.description}</div>
-                            <div class="text-[10px] text-slate-400">${t.date} • <span class="text-indigo-400">${t.category}</span> ${t.is_tax_deductible ? '• <span class="text-emerald-400 font-medium">🇺🇸 US Tax Tagged</span>' : ''}</div>
+                            <div class="text-[10px] text-slate-400">${t.date} • <span class="${isIncome ? 'text-emerald-400 font-semibold' : 'text-indigo-400'}">${t.category}</span> ${t.is_tax_deductible ? '• <span class="text-emerald-400 font-medium">🇺🇸 US Tax Tagged</span>' : ''}</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-rose-400">-$${Number(t.amount).toFixed(2)}</span>
+                            <span class="font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${isIncome ? '+' : '-'}$${Number(t.amount).toFixed(2)}</span>
                             <button onclick="openEditModal('${t.id}')" class="text-slate-400 hover:text-indigo-400 transition p-1"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
                             <button onclick="deleteTransaction('${t.id}')" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </div>
-                `).join('');
-            }
+                `;
+            }).join('');
+        }
 
-            // Tax tab rendering
-            const taxTxs = transactions.filter(t => t.is_tax_deductible);
-            document.getElementById('tax-count').innerText = `${taxTxs.length} items`;
+        // Tax tab rendering
+        const taxTxs = transactions.filter(t => t.is_tax_deductible);
+        document.getElementById('tax-count').innerText = `${taxTxs.length} items`;
 
-            if (taxTxs.length === 0) {
-                taxList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No IRS tax deductible items tagged yet.</div>`;
-            } else {
-                taxList.innerHTML = taxTxs.map(t => `
-                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                        <div class="space-y-0.5">
-                            <div class="font-bold text-white">${t.description}</div>
-                            <div class="text-[10px] text-slate-400">${t.date} • <span class="text-indigo-400">${t.category}</span></div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-emerald-400">$${Number(t.amount).toFixed(2)}</span>
-                            <button onclick="deleteTransaction('${t.id}')" title="Delete Tax Entry" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                        </div>
+        if (taxTxs.length === 0) {
+            taxList.innerHTML = `<div class="text-slate-500 text-center py-6 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No IRS tax deductible items tagged yet.</div>`;
+        } else {
+            taxList.innerHTML = taxTxs.map(t => `
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                    <div class="space-y-0.5">
+                        <div class="font-bold text-white">${t.description}</div>
+                        <div class="text-[10px] text-slate-400">${t.date} • <span class="text-indigo-400">${t.category}</span></div>
                     </div>
-                `).join('');
-            }
-            lucide.createIcons();
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-emerald-400">$${Number(t.amount).toFixed(2)}</span>
+                        <button onclick="deleteTransaction('${t.id}')" title="Delete Tax Entry" class="text-slate-500 hover:text-rose-400 transition p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                </div>
+            `).join('');
         }
+        lucide.createIcons();
+    }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition";
-            });
-            document.querySelector(`[data-target="tab-${tabName}"]`).className = "nav-btn flex flex-col items-center gap-1 text-indigo-400 py-1 px-2.5 transition";
-        }
-
-        function openSettingsModal(isOnboarding = false) {
-            if (isOnboarding) {
-                document.getElementById('settings-modal-title').innerText = "Welcome! Complete Setup";
-            } else {
-                document.getElementById('settings-modal-title').innerText = "Settings & Profile";
-            }
-
-            if (userSettings) {
-                document.getElementById('set-name').value = userSettings.full_name || '';
-                document.getElementById('set-wage').value = userSettings.hourly_rate || 15.00;
-                document.getElementById('set-home-tz').value = userSettings.home_tz || 'America/New_York';
-                document.getElementById('set-flatmates').value = userSettings.flatmates || 1;
-                document.getElementById('set-pool').value = userSettings.monthly_budget || 1500;
-                document.getElementById('set-rent').value = userSettings.rent_cost || 550;
-                document.getElementById('set-health').value = userSettings.health_ins_cost || 110;
-                document.getElementById('set-gez').value = userSettings.gez_cost || 40.00;
-                document.getElementById('set-internet').value = userSettings.internet_cost || 50.00;
-            } else {
-                document.getElementById('set-wage').value = 15.00;
-                document.getElementById('set-flatmates').value = 1;
-                document.getElementById('set-pool').value = 1500;
-                document.getElementById('set-rent').value = 550;
-                document.getElementById('set-health').value = 110;
-                document.getElementById('set-gez').value = 40.00;
-                document.getElementById('set-internet').value = 50.00;
-            }
-            recalcFixedSum();
-            document.getElementById('settings-modal').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
-
-        function recalcFixedSum() {
-            const rent = parseFloat(document.getElementById('set-rent').value) || 0;
-            const health = parseFloat(document.getElementById('set-health').value) || 0;
-            const gezTotal = parseFloat(document.getElementById('set-gez').value) || 0;
-            const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
-            const internet = parseFloat(document.getElementById('set-internet').value) || 0;
-            
-            const gezShare = gezTotal / flatmates;
-            document.getElementById('set-total-fixed').innerText = `$${(rent + health + gezShare + internet).toFixed(2)}`;
-        }
-
-        document.getElementById('settings-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const full_name = document.getElementById('set-name').value;
-            const hourly_rate = parseFloat(document.getElementById('set-wage').value) || 15.00;
-            const home_tz = document.getElementById('set-home-tz').value;
-            const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
-            const monthly_budget = parseFloat(document.getElementById('set-pool').value);
-            const rent_cost = parseFloat(document.getElementById('set-rent').value) || 0;
-            const health_ins_cost = parseFloat(document.getElementById('set-health').value) || 0;
-            const gez_cost = parseFloat(document.getElementById('set-gez').value) || 40.00;
-            const internet_cost = parseFloat(document.getElementById('set-internet').value) || 50.00;
-            
-            const gezShare = gez_cost / flatmates;
-            const fixed_costs = rent_cost + health_ins_cost + gezShare + internet_cost;
-
-            const payload = { 
-                user_id: currentUser.id,
-                full_name, 
-                hourly_rate,
-                home_tz, 
-                flatmates,
-                monthly_budget, 
-                fixed_costs, 
-                rent_cost, 
-                health_ins_cost, 
-                gez_cost, 
-                internet_cost
-            };
-
-            let error = null;
-            if (userSettings) {
-                const res = await supabaseClient.from('settings').update(payload).eq('user_id', currentUser.id);
-                error = res.error;
-            } else {
-                const res = await supabaseClient.from('settings').insert([payload]);
-                error = res.error;
-            }
-
-            if (!error) {
-                userSettings = payload;
-                document.getElementById('shift-rate').value = hourly_rate;
-                document.getElementById('settings-close-btn').classList.remove('hidden');
-                closeSettingsModal();
-                loadUserData();
-            } else {
-                alert('Error saving settings: ' + error.message);
-            }
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.className = "nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-2.5 transition";
         });
+        document.querySelector(`[data-target="tab-${tabName}"]`).className = "nav-btn flex flex-col items-center gap-1 text-indigo-400 py-1 px-2.5 transition";
+    }
 
-        function exportTaxCSV() {
-            const taxTxs = transactions.filter(t => t.is_tax_deductible);
-            if (taxTxs.length === 0) { alert('No IRS tax deductible expenses found.'); return; }
-            let csvContent = "data:text/csv;charset=utf-8,Date,Category,Note,Amount (USD)\n";
-            taxTxs.forEach(t => { csvContent += `${t.date},${t.category},"${t.description}",${t.amount}\n`; });
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", "IRS_US_Student_Tax_Deductions.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+    function openSettingsModal(isOnboarding = false) {
+        if (isOnboarding) {
+            document.getElementById('settings-modal-title').innerText = "Welcome! Complete Setup";
+        } else {
+            document.getElementById('settings-modal-title').innerText = "Settings & Profile";
         }
 
-        function shareViaWhatsApp() {
-            const text = encodeURIComponent(`🇺🇸 CampusFinance Update:\nToday's Dynamic Allowance: $${currentDailyLimit.toFixed(2)}\nTracked via my Student Budget PWA!`);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        if (userSettings) {
+            document.getElementById('set-name').value = userSettings.full_name || '';
+            document.getElementById('set-wage').value = userSettings.hourly_rate || 15.00;
+            document.getElementById('set-home-tz').value = userSettings.home_tz || 'America/New_York';
+            document.getElementById('set-flatmates').value = userSettings.flatmates || 1;
+            document.getElementById('set-pool').value = userSettings.monthly_budget || 1500;
+            document.getElementById('set-rent').value = userSettings.rent_cost || 550;
+            document.getElementById('set-health').value = userSettings.health_ins_cost || 110;
+            document.getElementById('set-gez').value = userSettings.gez_cost || 40.00;
+            document.getElementById('set-internet').value = userSettings.internet_cost || 50.00;
+        } else {
+            document.getElementById('set-wage').value = 15.00;
+            document.getElementById('set-flatmates').value = 1;
+            document.getElementById('set-pool').value = 1500;
+            document.getElementById('set-rent').value = 550;
+            document.getElementById('set-health').value = 110;
+            document.getElementById('set-gez').value = 40.00;
+            document.getElementById('set-internet').value = 50.00;
         }
-    </script>
-</body>
-</html>
+        recalcFixedSum();
+        document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+    function recalcFixedSum() {
+        const rent = parseFloat(document.getElementById('set-rent').value) || 0;
+        const health = parseFloat(document.getElementById('set-health').value) || 0;
+        const gezTotal = parseFloat(document.getElementById('set-gez').value) || 0;
+        const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
+        const internet = parseFloat(document.getElementById('set-internet').value) || 0;
+        
+        const gezShare = gezTotal / flatmates;
+        document.getElementById('set-total-fixed').innerText = `$${(rent + health + gezShare + internet).toFixed(2)}`;
+    }
+
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const full_name = document.getElementById('set-name').value;
+        const hourly_rate = parseFloat(document.getElementById('set-wage').value) || 15.00;
+        const home_tz = document.getElementById('set-home-tz').value;
+        const flatmates = parseInt(document.getElementById('set-flatmates').value) || 1;
+        const monthly_budget = parseFloat(document.getElementById('set-pool').value);
+        const rent_cost = parseFloat(document.getElementById('set-rent').value) || 0;
+        const health_ins_cost = parseFloat(document.getElementById('set-health').value) || 0;
+        const gez_cost = parseFloat(document.getElementById('set-gez').value) || 40.00;
+        const internet_cost = parseFloat(document.getElementById('set-internet').value) || 50.00;
+        
+        const gezShare = gez_cost / flatmates;
+        const fixed_costs = rent_cost + health_ins_cost + gezShare + internet_cost;
+
+        const payload = { 
+            user_id: currentUser.id,
+            full_name, 
+            hourly_rate,
+            home_tz, 
+            flatmates,
+            monthly_budget, 
+            fixed_costs, 
+            rent_cost, 
+            health_ins_cost, 
+            gez_cost, 
+            internet_cost
+        };
+
+        let error = null;
+        if (userSettings) {
+            const res = await supabaseClient.from('settings').update(payload).eq('user_id', currentUser.id);
+            error = res.error;
+        } else {
+            const res = await supabaseClient.from('settings').insert([payload]);
+            error = res.error;
+        }
+
+        if (!error) {
+            userSettings = payload;
+            document.getElementById('shift-rate').value = hourly_rate;
+            document.getElementById('settings-close-btn').classList.remove('hidden');
+            closeSettingsModal();
+            loadUserData();
+        } else {
+            alert('Error saving settings: ' + error.message);
+        }
+    });
+
+    function exportTaxCSV() {
+        const taxTxs = transactions.filter(t => t.is_tax_deductible);
+        if (taxTxs.length === 0) { alert('No IRS tax deductible expenses found.'); return; }
+        let csvContent = "data:text/csv;charset=utf-8,Date,Category,Note,Amount (USD)\n";
+        taxTxs.forEach(t => { csvContent += `${t.date},${t.category},"${t.description}",${t.amount}\n`; });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", "IRS_US_Student_Tax_Deductions.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function shareViaWhatsApp() {
+        const text = encodeURIComponent(`🇺🇸 CampusFinance Update:\nToday's Dynamic Allowance: $${currentDailyLimit.toFixed(2)}\nTracked via my Student Budget PWA!`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+</script>
